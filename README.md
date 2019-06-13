@@ -82,6 +82,7 @@ See also the list of [contributors](https://github.com/your/project/contributors
 
 ## References
 [1] 'Finding Prinicpal Paths in Data Space', M.J.Ferrarotti, W.Rocchia, S.Decherchi, [submitted]
+
 [2] 'Design and HPC Implementation of Unsupervised Kernel Methods in the Context of Molecular Dynamics', M.J.Ferrarotti, PhD Thesis.
 
 ## License
