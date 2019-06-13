@@ -1,6 +1,6 @@
 # spathial - an R package to define paths in data space
 
-One Paragraph of project description goes here
+_spthial_ (/ˈspeɪʃ(ə)l/) is an R package which implements the algorithm by Ferrarotti et al., (PMID 30596587) to discover principal paths in data space.
 
 ![alt text](https://giorgilaborg.files.wordpress.com/2019/06/logo_spathial.png)
 
