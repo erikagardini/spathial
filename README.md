@@ -78,8 +78,12 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 * **Erika Gardini** - *Hardcore development and conversion from Python* - [PurpleBooth](https://github.com/PurpleBooth)
 * **Federico M. Giorgi** - *Logo Design and R packaging* - [GiorgiLab](https://giorgilab.org)
 
-
 See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+
+## References
+[1] 'Finding Prinicpal Paths in Data Space', M.J.Ferrarotti, W.Rocchia, S.Decherchi, [submitted]
+
+[2] 'Design and HPC Implementation of Unsupervised Kernel Methods in the Context of Molecular Dynamics', M.J.Ferrarotti, PhD Thesis.
 
 ## License
 
