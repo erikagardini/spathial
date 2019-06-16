@@ -8,8 +8,8 @@ nc<-50
 # Read 2D input file (constellation)
 myfile<-system.file("extdata", "2D_constellation.csv", package = "spathial")
 X<-read.csv(myfile,as.is=TRUE,header=FALSE)
-N=nrow(X)
-d=ncol(X)
+# A safety measure to prevent using integers as character indexes
+rownames(X)<-paste0("sam",rownames(X))
 
 ### Select Boundaries
 # NOTE: the example could benefit from a manually selected pair
@@ -22,10 +22,7 @@ points(
 )
 
 ### Prefilter the data (function pp.rkm_prefilter)
-Nf<-200
-med_ids<-initMedoids(X,n=Nf-2,init_type="kpp",exclude_ids=boundary_ids)
-med_ids<-c(boundary_ids[1],med_ids,boundary_ids[2])
-
+rkm_prefilter(X,boundary_ids,plot_ax=TRUE)
 
 
 

@@ -1,7 +1,7 @@
 Package: spathial
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
+Title: Spathial: an algorithm to find paths in data space
+Version: 0.1.1
 Author: Erika Gardini, Federico M. Giorgi, Sergio Decherchi
 Maintainer: Erika Gardini <erika.gardini4@unibo.it>
 Description: spathial is an algorithm to calculate and define principal paths
