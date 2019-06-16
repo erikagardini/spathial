@@ -10,6 +10,9 @@ rkm_prefilter(X, boundary_ids, Nf = 200, k = 5, p = 1000, T = 0.1,
 \arguments{
 \item{X}{a data matrix}
 
+\item{boundary_ids}{names of the start and ending points, to be treated
+separately}
+
 \item{plot_ax}{boolean, whether the post-filtering graph should be plotted}
 }
 \value{

@@ -13,7 +13,8 @@ rkm <- function(X, init_W, s){
 #' Regularized K-means for principal path: prefiltering
 #'
 #' @param X a data matrix
-#' @param boundary_ids
+#' @param boundary_ids names of the start and ending points, to be treated
+#' separately
 #' @param Nf
 #' @param k
 #' @param T
@@ -95,7 +96,7 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1,
     lines(X[path,1], X[path,2],col="darkgreen",lwd=3,pch=19,type="o") # filter shortest path
     text(X[filter_mask,][boundary_ids_filtered,1],
          X[filter_mask,][boundary_ids_filtered,2],
-         labels=c("B1","B2"),font=2,cex=1.2) # Boundary samples
+         labels=c("B1","B2"),font=2,cex=1.3,col="grey") # Boundary samples
     legend("right",
            legend=c(
              "data filtered out",
@@ -106,12 +107,16 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1,
              "boundary samples"
            ),bg="#FFFFFF22",
            pch=c(1,19,15,4,19,66),
-           col=c("orange","blue","red","black","darkgreen","black"),
+           col=c("orange","blue","red","black","darkgreen","grey"),
            lty=c(0,0,0,0,1,0),lwd=c(0,0,0,0,2,0)
     )
   }
   # Return ouput
-  outlist<-list(X[filter_mask,], boundary_ids_filtered, X[!filter_mask,])
+  outlist<-list(
+    X_filtered=X[filter_mask,],
+    boundary_ids_filtered=boundary_ids_filtered,
+    X_garbage=X[!filter_mask,]
+  )
   return(outlist)
 }
 

@@ -1,28 +1,52 @@
-### NOTE: this is a stub, the example should go in the vignett at the end
+### NOTE: this is a stub, the example should go in the vignette at the end
 
 ### Initialize rkm_2D example
 # Set Random Seed
 set.seed(1)
+
 # Number of optimization variables i.e. path waypoints
-nc<-50
+NC<-50
+
 # Read 2D input file (constellation)
 myfile<-system.file("extdata", "2D_constellation.csv", package = "spathial")
 X<-read.csv(myfile,as.is=TRUE,header=FALSE)
-# A safety measure to prevent using integers as character indexes
+
+# NOTE: A safety measure to prevent using integers as character indexes
 rownames(X)<-paste0("sam",rownames(X))
 
 ### Select Boundaries
-# NOTE: the example could benefit from a manually selected pair
-# boundary_ids=lu.getMouseSamples2D(X,2)
-boundary_ids=rownames(X)[c(424,593)]
-plot(X,pch=20,col="black")
+plot(X,pch=20,col="black",main="Click to select path start and end points")
+if(FALSE){ # Set to TRUE for manual selection
+  boundary_ids<-rownames(X)[identify(X,n=2,plot=FALSE)]
+}
+boundary_ids<-rownames(X)[c(424,593)]
 points(
   X[boundary_ids,],pch="x",col="red",cex=4,
   xlab="Dimension 1",ylab="Dimension 2"
 )
 
 ### Prefilter the data (function pp.rkm_prefilter)
-rkm_prefilter(X,boundary_ids,plot_ax=TRUE)
+prefiltered<-rkm_prefilter(X,boundary_ids,plot_ax=TRUE)
+X<-prefiltered$X_filtered
+boundary_ids<-prefiltered$boundary_ids_filtered
+X_g<-prefiltered$X_garbage
+rm(prefiltered)
+
+
+### Initialize waypoints
+waypoint_ids<-initMedoids(X, NC, 'kpp', boundary_ids)
+waypoint_ids<-c(boundary_ids[1],waypoint_ids,boundary_ids[2])
+W_init<-X[waypoint_ids,]
+
+
+### Annealing with rkm
+s_span<-pracma::logspace(5,-5,n=NC)
+s_span<-c(s_span,0)
+models<-np.ndarray([s_span.size, NC + 2, d])
+for i, s in enumerate(s_span):
+  [W, u] = pp.rkm(X, W_init, s, plot_ax=None)
+W_init = W
+models[i, :, :] = W
 
 
 

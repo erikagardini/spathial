@@ -2,6 +2,7 @@
 
 export(corr2p)
 export(fisherp)
+export(initMedoids)
 export(kmgformat)
 export(p2corr)
 export(p2z)

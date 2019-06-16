@@ -1,14 +1,14 @@
-## Initialize NC medoids with init_type rational.
-#
-#Args:
-#[ndarray float] X: data matrix
-#[int] n: number of medoids to be selected
-#[string] init_type: rational to be used ('uniform' = randomly selected with uniform distribution, 'kpp' = k-means++ algorithm)
-#[ndarray int] boundary_ids: blacklisted ids that shouldn't be selected
-#
-#Returns:
-#[ndarray int] med_ids: indices of the medoids selected
-#
+#' intMedoids
+#'
+#' Initialize NC medoids with init_type rational.
+#'
+#' @param X a data matrix
+#' @param n integer number of medoids to be selected
+#' @param init_type character, the rational to be used
+#' ('uniform' = randomly selected with uniform distribution, 'kpp' = k-means++ algorithm)
+#' @param boundary_ids blacklisted ids that shouldn't be selected
+#' @return A vevtor of medoids selected
+#' @export
 initMedoids <- function(X, n, init_type, boundary_ids){
   N<-nrow(X)
   D<-ncol(X)
