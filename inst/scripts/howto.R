@@ -6,11 +6,9 @@
 # # git remote -v
 # >origin  https://github.com/erikagardini/spathial (fetch)
 # >origin  https://github.com/erikagardini/spathial (push)
-git remote set-url origin https://github.com/erikagardini/spathial.git
-
-
+# git remote set-url origin https://github.com/erikagardini/spathial.git
 ### Switching remote URLS from HTTPS to SSH
-git remote set-url origin git@github.com:erikagardini/spathial.git
+# git remote set-url origin git@github.com:erikagardini/spathial.git
 
 
 # if (!require(git2r)) {
