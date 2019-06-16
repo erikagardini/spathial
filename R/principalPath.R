@@ -8,20 +8,25 @@ rkm <- function(X, init_W, s){
 
 }
 
-#Regularized K-mens for principal path, PREFILTER.
-#[ndarray float] X: data matrix
-#[ndarray int] boundary_ids: start/end waypoints as sample indices
-#[int] Nf: number of filter centroids
-#[int] k: number of nearest neighbor for the penalized graph
-#[float] p: penalty factor for the penalized graph
-#[float] T: filter threshold
-#[ndarray float] X_filtered
-#[ndarray int] X_labels_filtered
-#[ndarray int] boundary_ids_filtered
-#[ndarray float] X_garbage
-#[ndarray int] X_labels_garbage
+## Regularized K-means for principal path, PREFILTER.
+#
+# Args:
+# [ndarray float] X: data matrix
+# [ndarray int] boundary_ids: start/end waypoints as sample indices
+# [int] Nf: number of filter centroids
+# [int] k: number of nearest neighbor for the penalized graph
+# [float] p: penalty factor for the penalized graph
+# [float] T: filter threshold
+#
+# Returns:
+#
+# [ndarray float] X_filtered
+# [ndarray int] X_labels_filtered
+# [ndarray int] boundary_ids_filtered
+# [ndarray float] X_garbage
+# [ndarray int] X_labels_garbage
 rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1){
-
+  med_ids<-initMedoids(X,n=Nf-2,init_type="kpp",exclude_ids=boundary_ids)
 }
 
 #Model Selection

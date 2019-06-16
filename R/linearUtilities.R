@@ -1,4 +1,4 @@
-#Initialize NC medoids with init_type rational.
+## Initialize NC medoids with init_type rational.
 #
 #Args:
 #[ndarray float] X: data matrix
@@ -15,13 +15,16 @@ initMedoids <- function(X, n, init_type, exclude_ids){
   med_ids<-rep(-1,n)
   if(init_type=="kpp"){
     # Select a random point (not a boundary id)
-    med_ids[1]<-sample(setdiff(1:N,boundary_ids),1)
+    med_ids[1]<-sample(setdiff(1:N,exclude_ids),1)
 
     # Now fill the path with n randomly picked medoids
     boundary_coords<-X[boundary_ids,]
-    for(i in 2:n){
+    for(i in 1:(n-1)){
       # Calculate all distances between points up to here and boundaries
-      Xmed_dst<-pdist::pdist(input,rbind(input[med_ids[1:i],],input[boundary_ids,]))
+      Xmed_dst<-pdist(
+        X,
+        rbind(X[med_ids[1:i],],boundary_coords)
+      )
       Xmed_dst<-as.matrix(Xmed_dst)^2
       D2<-apply(Xmed_dst,1,min)
       D2_n<-1.0/sum(D2)
@@ -52,9 +55,15 @@ initMedoids <- function(X, n, init_type, exclude_ids){
   return(med_ids)
 }
 
-#Find the elbow in a fuction f, as the point on f with max distance from the line connecting f[0,:] and f[-1,:]
-#[ndarray float] f: function(Nx2 array in the form [x, f(x)])
-#[int] elb_id: index of the elbow
+## Find the elbow in a fuction f, as the point on f with max distance
+## from the line connecting f[0,:] and f[-1,:]
+#
+# Args:
+# [ndarray float] f: function(Nx2 array in the form [x, f(x)])
+#
+# Returns:
+# [int] elb_id: index of the elbow
+#
 find_elbow <- function(f){
 
 }
