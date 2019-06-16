@@ -40,9 +40,11 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1){
       medmed_dst_p[k,i]<-medmed_dst[k,i]
     }
   }
-  medmed_dst_p[1,Nf]<-0
-  medmed_dst_p[Nf,1]<-0
+  medmed_dst_p[1,Nf]<-0 # NOTE: Not sure why this is done. Start and End overlap?
+  medmed_dst_p[Nf,1]<-0 # NOTE: Not sure why this is done
   # Find shortest path using dijkstra
+  g<-graph.adjacency(medmed_dst_p, weighted=TRUE)
+  path_dst<-igraph::distances(g,v=1,algorithm="dijkstra")
 
 
 
