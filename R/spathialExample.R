@@ -23,6 +23,8 @@ points(
 
 ### Prefilter the data (function pp.rkm_prefilter)
 Nf<-200
+med_ids<-initMedoids(X,n=Nf-2,init_type="kpp",exclude_ids=boundary_ids)
+med_ids<-c(boundary_ids[1],med_ids,boundary_ids[2])
 
 
 
