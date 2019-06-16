@@ -4,18 +4,18 @@
 #[ndarray float] X: data matrix
 #[int] n: number of medoids to be selected
 #[string] init_type: rational to be used ('uniform' = randomly selected with uniform distribution, 'kpp' = k-means++ algorithm)
-#[ndarray int] exclude_ids: blacklisted ids that shouldn't be selected
+#[ndarray int] boundary_ids: blacklisted ids that shouldn't be selected
 #
 #Returns:
 #[ndarray int] med_ids: indices of the medoids selected
 #
-initMedoids <- function(X, n, init_type, exclude_ids){
+initMedoids <- function(X, n, init_type, boundary_ids){
   N<-nrow(X)
   D<-ncol(X)
   med_ids<-rep(-1,n)
   if(init_type=="kpp"){
     # Select a random point (not a boundary id)
-    med_ids[1]<-sample(setdiff(1:N,exclude_ids),1)
+    med_ids[1]<-sample(setdiff(rownames(X),boundary_ids),1)
 
     # Now fill the path with n randomly picked medoids
     boundary_coords<-X[boundary_ids,]
@@ -43,12 +43,12 @@ initMedoids <- function(X, n, init_type, exclude_ids){
       # }
       ## The following line summarizes the previous code without the
       ## randomness. If randomness is necessary, we will change this
-      med_id<-which.max(D2*D2_n)
+      med_id<-rownames(X)[which.max(D2*D2_n)]
 
       med_ids[i+1]<-med_id
     }
   } else if (init_type=='uniform'){
-    med_ids<-sample(1:N,n)
+    med_ids<-sample(rownames(X),n)
   } else {
     stop("init_type not recognized.")
   }

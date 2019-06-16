@@ -8,25 +8,6 @@ rkm <- function(X, init_W, s){
 
 }
 
-## Regularized K-means for principal path, PREFILTER.
-#
-# Args:
-# [ndarray float] X: data matrix
-# [ndarray int] boundary_ids: start/end waypoints as sample indices
-# [int] Nf: number of filter centroids
-# [int] k: number of nearest neighbor for the penalized graph
-# [float] p: penalty factor for the penalized graph
-# [float] T: filter threshold
-# plot_ax: boolean, whether the post-filtering graph should be plotted
-#
-# Returns:
-#
-# [ndarray float] X_filtered
-# [ndarray int] X_labels_filtered
-# [ndarray int] boundary_ids_filtered
-# [ndarray float] X_garbage
-# [ndarray int] X_labels_garbage
-
 #' rkm_prefilter
 #'
 #' Regularized K-means for principal path: prefiltering
@@ -49,7 +30,7 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1,
   N=nrow(X)
   d=ncol(X)
   # Pick Nf medoids with k-means++ and compute pairwise distance matrix
-  med_ids<-initMedoids(X,n=Nf-2,init_type="kpp",exclude_ids=boundary_ids)
+  med_ids<-initMedoids(X,n=Nf-2,init_type="kpp",boundary_ids=boundary_ids)
   med_ids<-c(boundary_ids[1],med_ids,boundary_ids[2])
   medmed_dst<-as.matrix(dist(X[med_ids,],method="euclidean"))^2
 
@@ -63,12 +44,14 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1,
       medmed_dst_p[k,i]<-medmed_dst[k,i]
     }
   }
-  medmed_dst_p[1,Nf]<-0 # Not sure why this is done
-  medmed_dst_p[Nf,1]<-0 # Not sure why this is done
+  medmed_dst_p[1,Nf]<-0 # NOTE: not sure why this is done
+  medmed_dst_p[Nf,1]<-0 # NOTE: not sure why this is done
 
   # Find shortest path using dijkstra
   # NOTE: I didn't calculate the predecessors and simply got the shortest path
   g<-graph.adjacency(medmed_dst_p, weighted=TRUE)
+  # NOTE: it is unnecessary to calculate the distances, but it could become
+  # useful in the future, so I leave the code below:
   # path_dst<-igraph::distances(g,v=1,algorithm="dijkstra")
   path<-igraph::shortest_paths(g,from=1,to=ncol(medmed_dst_p))
   path<-names(path$vpath[[1]])
@@ -80,7 +63,7 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1,
     to_filter_ids<-c(names(which(medmed_dst[i,]<T,useNames=TRUE)),to_filter_ids)
   }
   to_filter_ids<-unique(setdiff(to_filter_ids,path))
-  to_keep_ids<-setdiff(colnames(medmed_dst),to_filter_ids)
+  to_keep_ids<-setdiff(rownames(medmed_dst),to_filter_ids)
   Xmed_dst<-pdist::pdist(
     X,
     X[to_keep_ids,]
@@ -88,29 +71,27 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1,
   Xmed_dst<-as.matrix(Xmed_dst)^2
   rownames(Xmed_dst)<-rownames(X)
   colnames(Xmed_dst)<-to_keep_ids
-  u<-names(apply(Xmed_dst,1,which.min))
+  # Select minimum distance medoids
+  u<-colnames(Xmed_dst)[apply(Xmed_dst,1,which.min)]
   filter_mask<-setNames(rep(FALSE,N),rownames(X))
-  for(i in 1:N){
-    if(u[i]%in%path){
-      filter_mask[i]<-TRUE
-    }
-  }
+  filter_mask[u%in%path]<-TRUE
 
-  # Convert boundary indices
+  # NOTE: Convert boundary indices not necessary anymore,
+  # I simply leveraged the object names power of R to avoid these tricks
   boundary_ids_filtered<-boundary_ids
-  boundary_ids_filtered[1]<-boundary_ids[1] - boundary_ids[1] + sum(filter_mask[1:boundary_ids[1]])
-  boundary_ids_filtered[2]<-boundary_ids[2] - boundary_ids[2] + sum(filter_mask[1:boundary_ids[2]])
 
   # Plot filter figure
   if(plot_ax){
-    xrange<-abs(max(X[!filter_mask,1])-min(X[!filter_mask,1]))
-    plot(X[!filter_mask,1],X[!filter_mask,2],
+    xcoord<-X[!filter_mask,1]
+    ycoord<-X[!filter_mask,2]
+    xrange<-abs(max(X[,1])-min(X[,1]))
+    plot(xcoord,ycoord,
          xlab="Dimension 1",ylab="Dimension 2",
          main="Post-filtering Path plot",col="orange",pch=1,
-         xlim=c(min(X[!filter_mask,1]),max(X[!filter_mask,1])+xrange/2)) # data filtered out
-    points(X[filter_mask,1],X[filter_mask,2],pch=19,col="blue") # data kept NOTE: THIS ONE IS WRONG, recheck filter_mask
-    points(X[med_ids,1],X[med_ids,2],col="red",pch=1) # filter medoids
-    points(X[to_filter_ids, 1], X[to_filter_ids, 2],pch=4,cex=1.2) # filter medoids dropped
+         xlim=c(min(X[,1]),max(X[,1])+xrange/2)) # data filtered out
+    points(X[filter_mask,1],X[filter_mask,2],pch=19,col="blue") # data kept
+    points(X[med_ids,1],X[med_ids,2],col="red",pch=15) # filter medoids
+    points(X[to_filter_ids, 1], X[to_filter_ids, 2],pch="x",cex=1) # filter medoids dropped
     lines(X[path,1], X[path,2],col="darkgreen",lwd=3,pch=19,type="o") # filter shortest path
     text(X[filter_mask,][boundary_ids_filtered,1],
          X[filter_mask,][boundary_ids_filtered,2],
@@ -124,7 +105,7 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1,
              "filter shortest path",
              "boundary samples"
            ),bg="#FFFFFF22",
-           pch=c(1,19,1,4,19,66),
+           pch=c(1,19,15,4,19,66),
            col=c("orange","blue","red","black","darkgreen","black"),
            lty=c(0,0,0,0,1,0),lwd=c(0,0,0,0,2,0)
     )
