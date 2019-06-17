@@ -9,7 +9,7 @@
 #' @return W - final waypoints matrix
 #' @references 'Finding Prinicpal Paths in Data Space', M.J.Ferrarotti, W.Rocchia, S.Decherchi, IEEE transactions on neural networks and learning systems 2018
 #' @export
-rkm <- function(X, init_W, s){
+rkm <- function(X, init_W, s, plot_ax=FALSE){
   # Extract useful info from args
   N<-nrow(X)
   d<-ncol(X)
@@ -67,15 +67,37 @@ rkm <- function(X, init_W, s){
     # Construct K-means Heassian
     AX<-diag(W_card[2:(length(W_card)-1)])
 
-    # Update waypoints
+    ### Update waypoints
+    # Compute the (Moore-Penrose) pseudo-inverse of the multiplied Hessians
+    pseudo<-MASS::ginv(AX+s*AW)
+    # Multiply the centroid matrix with the s parameter with the boundaries, it's so clear it hurts
+    csb<-C+0.5*s*B
+    # Let's multiply these matrices, for the glory of the FaBiT
+    W<-pseudo%*%csb
+    rownames(W)<-rownames(B)
+    colnames(W)<-colnames(X)
+    W<-rbind(boundary[1,],W,boundary[2,])
 
+    # Compute new labels
+    XW_dst<-pracma::distmat(
+      as.matrix(X),
+      as.matrix(W)
+    )
+    XW_dst<-XW_dst^2
+    u_new<-colnames(XW_dst)[apply(XW_dst,1,which.min)]
 
-
-
+    # Check for convergence
+    converged<-all(u_new==u)
+    u<-u_new
+    #converged<-(sum(u_new==u)<1) # NOTE: we can loosen the convergence requirements with >1
   }
 
-
-
+  # Plot Progression
+  if(plot_ax){
+    plot(X[,1],X[,2],main=paste0("s=",s))
+    lines(W[,1], W[,2],lwd=3,col="red",type="o",pch=15)
+  }
+  return(W)
 }
 
 #' rkm_prefilter

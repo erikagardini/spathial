@@ -43,16 +43,17 @@ init_W<-X[waypoint_ids,]
 ### Annealing with rkm
 s_span<-pracma::logspace(5,-5,n=NC)
 s_span<-c(s_span,0)
-models<-array(data=NA,dim=c(length(s_span),NC+2,ncol(X)))
-s<-s_span[1]
+#models<-array(data=NA,dim=c(length(s_span),NC+2,ncol(X)))
+#s<-s_span[1]
+models<-list()
 
-
-# for(i in 1:length(s_span)){
-#   s<-s_span[i]
-#   W<-rkm(X,init_W,s,plot_ax=TRUE)
-#   init_W<-W
-#   models[i,,]<-W
-# }
+for(i in 1:length(s_span)){
+  s<-s_span[i]
+  W<-rkm(X,init_W,s,plot_ax=TRUE)
+  init_W<-W
+  models[[as.character(s)]]<-W
+  #models[i,,]<-W
+}
 
 
 ### Interactive model selection
