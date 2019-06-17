@@ -24,7 +24,7 @@ library(devtools)
 document()
 
 
-# Remove .Rhistory
-unlink(".Rhistory")
-unlink("R/.Rhistory")
+# # Remove .Rhistory
+# unlink(".Rhistory")
+# unlink("R/.Rhistory")
 

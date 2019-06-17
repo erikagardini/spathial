@@ -4,7 +4,7 @@
 \alias{rkm}
 \title{rkm}
 \usage{
-rkm(X, init_W, s)
+rkm(X, init_W, s, plot_ax = FALSE)
 }
 \arguments{
 \item{X}{a data matrix}
