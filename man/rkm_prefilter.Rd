@@ -16,7 +16,7 @@ separately}
 \item{plot_ax}{boolean, whether the post-filtering graph should be plotted}
 }
 \value{
-A list with letters and numbers.
+A list of objects
 \itemize{
   \item X_filtered - The filtered data matrix
   \item boundary_ids_filtered - The filtered boundary ids

@@ -2,7 +2,7 @@
 % Please edit documentation in R/linearUtilities.R
 \name{initMedoids}
 \alias{initMedoids}
-\title{intMedoids}
+\title{initMedoids}
 \usage{
 initMedoids(X, n, init_type, boundary_ids)
 }

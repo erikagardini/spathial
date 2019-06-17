@@ -1,4 +1,4 @@
-#' intMedoids
+#' initMedoids
 #'
 #' Initialize NC medoids with init_type rational.
 #'
@@ -11,7 +11,7 @@
 #' @export
 initMedoids <- function(X, n, init_type, boundary_ids){
   N<-nrow(X)
-  D<-ncol(X)
+  d<-ncol(X)
   med_ids<-rep(-1,n)
   if(init_type=="kpp"){
     # Select a random point (not a boundary id)
@@ -21,11 +21,11 @@ initMedoids <- function(X, n, init_type, boundary_ids){
     boundary_coords<-X[boundary_ids,]
     for(i in 1:(n-1)){
       # Calculate all distances between points up to here and boundaries
-      Xmed_dst<-pdist(
-        X,
-        rbind(X[med_ids[1:i],],boundary_coords)
+      Xmed_dst<-pracma::distmat(
+        as.matrix(X),
+        as.matrix(rbind(X[med_ids[1:i],],boundary_coords))
       )
-      Xmed_dst<-as.matrix(Xmed_dst)^2
+      Xmed_dst<-Xmed_dst^2
       D2<-apply(Xmed_dst,1,min)
       D2_n<-1.0/sum(D2)
 

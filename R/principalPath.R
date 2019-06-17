@@ -1,10 +1,80 @@
-#Regularized K-mens for principal path, MINIMIZER.
-#[ndarray float] X: data matrix
-#[ndarray float] init_W: initial waypoints matrix
-#[float] s: regularization parameter
-#[ndarray float] W: final waypoints matrix
-#[ndarray int] labels: final
+#' rkm
+#'
+#' Regularized K-means for principal path, MINIMIZER.
+#'
+#' @param X a data matrix
+#' @param init_W initial waypoints matrix
+#' @param s regularization parameter
+#' @param plot_ax boolean, whether to plot a graph
+#' @return W - final waypoints matrix
+#' @references 'Finding Prinicpal Paths in Data Space', M.J.Ferrarotti, W.Rocchia, S.Decherchi, IEEE transactions on neural networks and learning systems 2018
+#' @export
 rkm <- function(X, init_W, s){
+  # Extract useful info from args
+  N<-nrow(X)
+  d<-ncol(X)
+  NC<-nrow(init_W)-2
+
+  # Construct boundary matrix
+  boundary<-init_W[c(1,nrow(init_W)),]
+  B<-matrix(0,nrow=NC,ncol=d)
+  B[1,]<-as.numeric(boundary[1,])
+  B[nrow(B),]<-as.numeric(boundary[2,])
+  rownames(B)<-rownames(init_W)[2:(nrow(init_W)-1)]
+
+  # Construct regularizer hessian
+  diag1<-diag(NC)
+  diag2<-diag(NC)
+  diag(diag2)<-(-0.5)
+  diag2<-cbind(rep(0,NC),diag2[,1:(ncol(diag2)-1)])
+  diag3<-diag(NC)
+  diag(diag3)<-(-0.5)
+  diag3<-rbind(rep(0,NC),diag3[1:(nrow(diag3)-1),])
+  AW<-diag1+diag2+diag3
+  rownames(AW)<-colnames(AW)<-rownames(B)
+
+  # Compute initial labels
+  XW_dst<-pracma::distmat(
+    as.matrix(X),
+    as.matrix(init_W)
+  )
+  XW_dst<-XW_dst^2
+  u<-colnames(XW_dst)[apply(XW_dst,1,which.min)]
+
+  ### Iterate the minimizer
+  converged<-FALSE
+  it<-0
+  while(!converged){
+    it<-it+1
+    message("Iteration ",it)
+
+    # Compute Cardinality
+    W_card<-setNames(rep(0,NC+2),rownames(init_W))
+    for(i in 1:(length(W_card))){
+      W_card[i]<-sum(u==names(W_card)[i]) # Note: this can be rewritten with apply
+    }
+
+    # Compute Centroid Matrix
+    C<-matrix(NA,nrow=NC,ncol=d)
+    rownames(C)<-rownames(B)
+    colnames(C)<-colnames(X)
+    for(i in 2:(NC+1)){ # NOTE: here I took some liberties, recheck
+      ii<-rownames(C)[i-1]
+      iiw<-which(u==ii)
+      C[i-1,]<-apply(X[iiw,],2,sum)
+    }
+
+    # Construct K-means Heassian
+    AX<-diag(W_card[2:(length(W_card)-1)])
+
+    # Update waypoints
+
+
+
+
+  }
+
+
 
 }
 
@@ -19,7 +89,7 @@ rkm <- function(X, init_W, s){
 #' @param k
 #' @param T
 #' @param plot_ax boolean, whether the post-filtering graph should be plotted
-#' @return A list with letters and numbers.
+#' @return A list of objects
 #' \itemize{
 #'   \item X_filtered - The filtered data matrix
 #'   \item boundary_ids_filtered - The filtered boundary ids
@@ -65,11 +135,11 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1,
   }
   to_filter_ids<-unique(setdiff(to_filter_ids,path))
   to_keep_ids<-setdiff(rownames(medmed_dst),to_filter_ids)
-  Xmed_dst<-pdist::pdist(
-    X,
-    X[to_keep_ids,]
+  Xmed_dst<-pracma::distmat(
+    as.matrix(X),
+    as.matrix(X[to_keep_ids,])
   )
-  Xmed_dst<-as.matrix(Xmed_dst)^2
+  Xmed_dst<-Xmed_dst^2
   rownames(Xmed_dst)<-rownames(X)
   colnames(Xmed_dst)<-to_keep_ids
   # Select minimum distance medoids

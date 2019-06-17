@@ -1,4 +1,5 @@
-### NOTE: this is a stub, the example should go in the vignette at the end
+# ### NOTE: this is a stub, the example should go in the vignette at the end
+# library(spathial)
 
 ### Initialize rkm_2D example
 # Set Random Seed
@@ -36,18 +37,25 @@ rm(prefiltered)
 ### Initialize waypoints
 waypoint_ids<-initMedoids(X, NC, 'kpp', boundary_ids)
 waypoint_ids<-c(boundary_ids[1],waypoint_ids,boundary_ids[2])
-W_init<-X[waypoint_ids,]
+init_W<-X[waypoint_ids,]
 
 
 ### Annealing with rkm
 s_span<-pracma::logspace(5,-5,n=NC)
 s_span<-c(s_span,0)
-models<-np.ndarray([s_span.size, NC + 2, d])
-for i, s in enumerate(s_span):
-  [W, u] = pp.rkm(X, W_init, s, plot_ax=None)
-W_init = W
-models[i, :, :] = W
+models<-array(data=NA,dim=c(length(s_span),NC+2,ncol(X)))
+s<-s_span[1]
 
+
+# for(i in 1:length(s_span)){
+#   s<-s_span[i]
+#   W<-rkm(X,init_W,s,plot_ax=TRUE)
+#   init_W<-W
+#   models[i,,]<-W
+# }
+
+
+### Interactive model selection
 
 
 
