@@ -10,7 +10,9 @@ NC<-50
 
 # Read 2D input file (constellation)
 #myfile<-system.file("extdata", "2D_constellation.csv", package = "spathial")
-X<-read.csv(file="/Users/erikagardini/spathial/inst/extdata/music_dataset.csv",as.is=TRUE,header=FALSE)
+#X<-read.csv(file="/Users/erikagardini/spathial/inst/extdata/music_dataset.csv",as.is=TRUE,header=FALSE)
+myfile<-system.file("extdata", "music_dataset.csv", package = "spathial")
+X<-read.csv(myfile,as.is=TRUE,header=FALSE)
 X <- X[,3:dim(X)[2]]
 # NOTE: A safety measure to prevent using integers as character indexes
 rownames(X)<-paste0("sam",rownames(X))

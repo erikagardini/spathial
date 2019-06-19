@@ -1,3 +1,47 @@
+#' spathialWay
+#'
+#' Get the coordinates of the waypoints of the principal path
+#'
+#' @param X data points
+#' @param boundaries starting and ending points
+#' @param NC number of waypoints
+#' @param prefiltering a boolean
+#' @return spathial waypoints
+#' @export
+spathialWay <- function(X, boundaries, NC, prefiltering){
+  if(prefiltering){
+    ### Prefilter the data (function pp.rkm_prefilter)
+    prefiltered<-rkm_prefilter(X,boundary_ids,plot_ax=TRUE)
+    X<-prefiltered$X_filtered
+    boundary_ids<-prefiltered$boundary_ids_filtered
+    X_g<-prefiltered$X_garbage
+    rm(prefiltered)
+  }
+
+  ### Initialize waypoints
+  waypoint_ids<-initMedoids(X, NC, 'kpp', boundary_ids)
+  waypoint_ids<-c(boundary_ids[1],waypoint_ids,boundary_ids[2])
+  init_W<-X[waypoint_ids,]
+
+  ### Annealing with rkm
+  s_span<-pracma::logspace(5,-5,n=NC)
+  s_span<-c(s_span,0)
+  #models<-array(data=NA,dim=c(length(s_span),NC+2,ncol(X)))
+  #s<-s_span[1]
+
+  models<-list()
+  for(i in 1:length(s_span)){
+    s<-s_span[i]
+    W<-rkm(X,init_W,s,plot_ax=TRUE)
+    init_W<-W
+    models[[as.character(s)]]<-W
+    #models[i,,]<-W
+  }
+  W_dst_var <- rkm_MS_pathvar(models, s_span, X)
+  s_elb_id <- find_elbow(cbind(s_span, W_dst_var))
+  return(models[[s_elb_id]])
+}
+
 #' rkm
 #'
 #' Regularized K-means for principal path, MINIMIZER.
@@ -107,9 +151,9 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
 #' @param X a data matrix
 #' @param boundary_ids names of the start and ending points, to be treated
 #' separately
-#' @param Nf
-#' @param k
-#' @param T
+#' @param Nf parameter Nf (requires description)
+#' @param k parameter k (requires description)
+#' @param T parameter T (requires description)
 #' @param plot_ax boolean, whether the post-filtering graph should be plotted
 #' @return A list of objects
 #' \itemize{
@@ -219,7 +263,7 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1,
 #' @param modelsmatrix with path models, shape, N_models x N x (NC+2)
 #' @param s_span array with values of the reg parameter for each model (sorted in decreasing order, with 0 as last value)
 #' @param X data matrix
-#' @result W_dst_var - array with values of variance for each model
+#' @return W_dst_var: array with values of variance for each model
 #' @export
 rkm_MS_pathvar <- function(models, s_span, X){
   W_dst_var <- array(data = 0.0, dim = length(models))
