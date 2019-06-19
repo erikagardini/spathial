@@ -55,15 +55,12 @@ initMedoids <- function(X, n, init_type, boundary_ids){
   return(med_ids)
 }
 
-## Find the elbow in a fuction f, as the point on f with max distance
-## from the line connecting f[0,:] and f[-1,:]
-#
-# Args:
-# [ndarray float] f: function(Nx2 array in the form [x, f(x)])
-#
-# Returns:
-# [int] elb_id: index of the elbow
-#
+#' Find the elbow in a fuction f, as the point on f with max distance
+#' from the line connecting f[0,:] and f[-1,:]
+#'
+#' @param f: function(Nx2 array in the form [x, f(x)])
+#' @return elb_id: index of the elbow
+#' @export
 find_elbow <- function(f){
   ps <- array(c(f[1,1], f[1,2]), dim = c(2))
   pe <- array(c(f[dim(f)[1],1], f[dim(f)[1],2]), dim = c(2))

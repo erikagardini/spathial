@@ -94,8 +94,8 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
 
   # Plot Progression
   if(plot_ax){
-    plot(X[,1],X[,2],main=paste0("s=",s))
-    lines(W[,1], W[,2],lwd=3,col="red",type="o",pch=15)
+    plot(X[,57],X[,501],main=paste0("s=",s))
+    lines(W[,57], W[,501],lwd=3,col="red",type="o",pch=15)
   }
   return(W)
 }
@@ -212,12 +212,15 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1,
   return(outlist)
 }
 
-#Model Selection
-#Regularized K-menans for principal path, MODEL SELECTION, variance on waypoints interdistance.
-#[ndarray float] models: matrix with path models, shape, N_models x N x (NC+2)
-#[ndarray float] s_span: array with values of the reg parameter for each model (sorted in decreasing order, with 0 as last value)
-#[ndarray float] X: data matrix
-#[ndarray float] W_dst_var: array with values of variance for each model
+#' Model Selection
+#'
+#' Regularized K-menans for principal path, MODEL SELECTION, variance on waypoints interdistance.
+#'
+#' @param modelsmatrix with path models, shape, N_models x N x (NC+2)
+#' @param s_span array with values of the reg parameter for each model (sorted in decreasing order, with 0 as last value)
+#' @param X data matrix
+#' @result W_dst_var - array with values of variance for each model
+#' @export
 rkm_MS_pathvar <- function(models, s_span, X){
   W_dst_var <- array(data = 0.0, dim = length(models))
   for(i in (1:length(models))){
