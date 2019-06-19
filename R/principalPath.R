@@ -219,5 +219,13 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1,
 #[ndarray float] X: data matrix
 #[ndarray float] W_dst_var: array with values of variance for each model
 rkm_MS_pathvar <- function(models, s_span, X){
-
+  W_dst_var <- array(data = 0.0, dim = length(models))
+  for(i in (1:length(models))){
+    W = models[[i]]
+    W=as.matrix(W)
+    res <- W[2:dim(W)[1],] - W[1:dim(W)[1]-1,]
+    W_dst=apply(res, 1, function(x) norm(as.matrix(x),"F"))
+    W_dst_var[i] = var(W_dst)
+  }
+  return(W_dst_var)
 }
