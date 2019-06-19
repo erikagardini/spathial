@@ -1,47 +1,3 @@
-#' spathialWay
-#'
-#' Get the coordinates of the waypoints of the principal path
-#'
-#' @param X data points
-#' @param boundaries starting and ending points
-#' @param NC number of waypoints
-#' @param prefiltering a boolean
-#' @return spathial waypoints
-#' @export
-spathialWay <- function(X, boundaries, NC, prefiltering){
-  if(prefiltering){
-    ### Prefilter the data (function pp.rkm_prefilter)
-    prefiltered<-rkm_prefilter(X,boundary_ids,plot_ax=TRUE)
-    X<-prefiltered$X_filtered
-    boundary_ids<-prefiltered$boundary_ids_filtered
-    X_g<-prefiltered$X_garbage
-    rm(prefiltered)
-  }
-
-  ### Initialize waypoints
-  waypoint_ids<-initMedoids(X, NC, 'kpp', boundary_ids)
-  waypoint_ids<-c(boundary_ids[1],waypoint_ids,boundary_ids[2])
-  init_W<-X[waypoint_ids,]
-
-  ### Annealing with rkm
-  s_span<-pracma::logspace(5,-5,n=NC)
-  s_span<-c(s_span,0)
-  #models<-array(data=NA,dim=c(length(s_span),NC+2,ncol(X)))
-  #s<-s_span[1]
-
-  models<-list()
-  for(i in 1:length(s_span)){
-    s<-s_span[i]
-    W<-rkm(X,init_W,s,plot_ax=TRUE)
-    init_W<-W
-    models[[as.character(s)]]<-W
-    #models[i,,]<-W
-  }
-  W_dst_var <- rkm_MS_pathvar(models, s_span, X)
-  s_elb_id <- find_elbow(cbind(s_span, W_dst_var))
-  return(models[[s_elb_id]])
-}
-
 #' rkm
 #'
 #' Regularized K-means for principal path, MINIMIZER.
@@ -90,22 +46,28 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
   it<-0
   while(!converged){
     it<-it+1
-    message("Iteration ",it)
+    #message("Iteration ",it)
 
     # Compute Cardinality
     W_card<-setNames(rep(0,NC+2),rownames(init_W))
-    for(i in 1:(length(W_card))){
-      W_card[i]<-sum(u==names(W_card)[i]) # Note: this can be rewritten with apply
-    }
+    tu<-table(u)
+    W_card[names(tu)]<-tu
 
     # Compute Centroid Matrix
     C<-matrix(NA,nrow=NC,ncol=d)
     rownames(C)<-rownames(B)
     colnames(C)<-colnames(X)
-    for(i in 2:(NC+1)){ # NOTE: here I took some liberties, recheck
-      ii<-rownames(C)[i-1]
+    for(i in 1:NC){ # NOTE: here I took some liberties, recheck (also it can be optimized and improved)
+      ii<-rownames(C)[i]
       iiw<-which(u==ii)
-      C[i-1,]<-apply(X[iiw,],2,sum)
+      if(length(iiw)==1){
+        centroid<-X[iiw,] # TODO I fixed this
+      } else if(length(iiw)>1) {
+        centroid<-apply(X[iiw,],2,sum)
+      } else {
+        centroid<-rep(0,ncol(X))
+      }
+      C[i,]<-centroid
     }
 
     # Construct K-means Heassian
@@ -121,6 +83,7 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
     rownames(W)<-rownames(B)
     colnames(W)<-colnames(X)
     W<-rbind(boundary[1,],W,boundary[2,])
+    rownames(W)<-rownames(init_W)
 
     # Compute new labels
     XW_dst<-pracma::distmat(
