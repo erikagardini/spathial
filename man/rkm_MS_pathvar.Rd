@@ -13,6 +13,9 @@ rkm_MS_pathvar(models, s_span, X)
 
 \item{modelsmatrix}{with path models, shape, N_models x N x (NC+2)}
 }
+\value{
+W_dst_var: array with values of variance for each model
+}
 \description{
 Regularized K-menans for principal path, MODEL SELECTION, variance on waypoints interdistance.
 }

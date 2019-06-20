@@ -1,4 +1,54 @@
-#' spathialWay
+#' Select starting and ending points
+#'
+#' Get the coordinates of the starting and ending points
+#'
+#' @param X data points
+#' @param X_labels labels of the data points
+#' @param mode strategy for boundary selection
+#' \itemize{
+#'   \item 0 - centroids
+#'   \item 1 - selected by the user
+#' }
+#' @param from
+#' @param to
+#' @return list
+#' \itemize{
+#'   \item boundary ids - The indexes of the boundaries
+#'   \item X - The new data matrix with the boundary
+#'   \item X_labels - The new labels of the data matrix with the boundary labels
+#' }
+#' @export
+spathial_boundary_ids <- function(X, X_labels, mode, from = NULL, to = NULL){
+  if(mode == 1){
+    X_2D <- spathial_2D(X)
+    plot(X_2D$Y[,1],X_2D$Y[,2], pch=20,col="black",main="Click to select path start and end points")
+    boundary_ids<-rownames(X)[identify(X,n=2,plot=FALSE)]
+    points(
+      X_2D$Y[boundary_ids,1], X_2D$Y[boundary_ids,2],pch="x",col="red",cex=4,
+      xlab="Dimension 1",ylab="Dimension 2"
+    )
+  }else{
+    if(is.null(from) | is.null(to)){
+      stop("You should insert the starting label and the ending label")
+    }else{
+      starting_centroid <- colMeans(X[which(X_labels == from),])
+      ending_centroid <- colMeans(X[which(X_labels == to),])
+      X <- rbind(X, starting_centroid, ending_centroid)
+      X_labels <- c(X_labels, 0)
+      X_labels <- c(X_labels, 0)
+      boundary_ids <- which(X_labels == 0)
+    }
+  }
+
+  outlist<-list(
+    X=X,
+    X_labels=X_labels,
+    boundary_ids=boundary_ids
+    )
+  return(outlist)
+}
+
+#' Compute Principal Path
 #'
 #' Get the coordinates of the waypoints of the principal path
 #'
@@ -8,7 +58,7 @@
 #' @param prefiltering a boolean
 #' @return spathial waypoints
 #' @export
-spathialWay <- function(X, boundaries, NC, prefiltering){
+spathialWay <- function(X, boundary_ids, NC, prefiltering){
   if(prefiltering){
     ### Prefilter the data (function pp.rkm_prefilter)
     prefiltered<-rkm_prefilter(X,boundary_ids,plot_ax=TRUE)
@@ -64,11 +114,9 @@ spathial_labels <- function(X, X_labels, ppath){
 #' @param [ndarray float] ppath: waypoints
 #' @return [ndarray float] 2D_ppath: 2D coordinates of the waypoints
 #' @export
-spathial_2D <- function(ppath){
+spathial_2D <- function(points){
   library(Rtsne)
   set.seed(1)
-  ttt<-Rtsne(as.matrix(ppath), dims = 2, perplexity = 5)
-  return(ttt)
+  points_2D <- Rtsne(as.matrix(points), dims = 2, perplexity = 5)
+  return(points_2D)
 }
-
-

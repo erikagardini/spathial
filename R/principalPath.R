@@ -100,10 +100,10 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
   }
 
   # Plot Progression
-  if(plot_ax){
-    plot(X[,57],X[,501],main=paste0("s=",s))
-    lines(W[,57], W[,501],lwd=3,col="red",type="o",pch=15)
-  }
+  #if(plot_ax){
+   # plot(X[,57],X[,501],main=paste0("s=",s))
+    #lines(W[,57], W[,501],lwd=3,col="red",type="o",pch=15)
+  #}
   return(W)
 }
 
