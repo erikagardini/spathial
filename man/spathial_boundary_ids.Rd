@@ -16,6 +16,10 @@ spathial_boundary_ids(X, X_labels, mode, from = NULL, to = NULL)
   \item 0 - centroids
   \item 1 - selected by the user
 }}
+
+\item{from}{- starting class}
+
+\item{to}{- ending class}
 }
 \value{
 list

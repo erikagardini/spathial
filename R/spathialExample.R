@@ -8,6 +8,9 @@ data<-read.csv(myfile,as.is=TRUE,header=FALSE)
 X <- data[,3:dim(data)[2]]
 X_labels <- data[,1]
 
+X <- X[which(X_labels == 2 | X_labels == 48 | X_labels == 15), ]
+X_labels <- X_labels[which(X_labels == 2 | X_labels == 48 | X_labels == 15)]
+
 # Set row names
 rownames(X)<-paste0("sam",rownames(X))
 boundary_init <- spathial_boundary_ids(X, X_labels, mode=0, from=2, to=48)
@@ -20,7 +23,7 @@ X_2D <- spathial_2D(X)
 
 pp <- spathialWay(X, boundary_ids, NC, prefiltering=FALSE)
 
-
 pp_2D <- spathial_2D(pp)
-#plot(X_2D$Y[,1],X_2D$Y[,2])
-#lines(pp_2D$Y[,1], pp_2D$Y[,2],lwd=3,col="red",type="o",pch=15)
+
+plot(X_2D$Y[,1],X_2D$Y[,2], col=X_labels)
+lines(pp_2D$Y[,1], pp_2D$Y[,2],lwd=3,col="blue",type="o",pch=15)

@@ -72,3 +72,4 @@ find_elbow <- function(f){
   elb_id = (which.max(p_line_dst)) + 1
   return(elb_id)
 }
+

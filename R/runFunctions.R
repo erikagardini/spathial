@@ -9,8 +9,8 @@
 #'   \item 0 - centroids
 #'   \item 1 - selected by the user
 #' }
-#' @param from
-#' @param to
+#' @param from - starting class
+#' @param to - ending class
 #' @return list
 #' \itemize{
 #'   \item boundary ids - The indexes of the boundaries
