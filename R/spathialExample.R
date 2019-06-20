@@ -18,7 +18,10 @@ X_labels <- boundary_init$X_labels
 rownames(X)<-paste0("sam",rownames(X))
 
 pp <- spathialWay(X, boundary_ids, NC, FALSE)
-#pp_2D <- spathial_2D(pp)
-#plot(X[,57],X[,501])
+
+X_2D <- spathial_2D(X)
+
+pp_2D <- spathial_2D(pp)
+#plot(X_2D$Y[,1],X_2D$Y[,2])
 #lines(pp_2D$Y[,1], pp_2D$Y[,2],lwd=3,col="red",type="o",pch=15)
 

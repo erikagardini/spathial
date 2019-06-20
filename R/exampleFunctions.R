@@ -53,7 +53,7 @@ spathial_boundary_ids <- function(X, X_labels, mode, from = NULL, to = NULL){
 #' Get the coordinates of the waypoints of the principal path
 #'
 #' @param X data points
-#' @param boundaries starting and ending points
+#' @param boundary_ids starting and ending points
 #' @param NC number of waypoints
 #' @param prefiltering a boolean
 #' @return spathial waypoints
