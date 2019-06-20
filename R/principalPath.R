@@ -39,7 +39,8 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
     as.matrix(init_W)
   )
   XW_dst<-XW_dst^2
-  u<-colnames(XW_dst)[apply(XW_dst,1,which.min)]
+  u<-colnames(XW_dst)[apply(XW_dst,1,which.min)] # What is u?
+
 
   ### Iterate the minimizer
   converged<-FALSE
@@ -61,7 +62,7 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
       ii<-rownames(C)[i]
       iiw<-which(u==ii)
       if(length(iiw)==1){
-        centroid<-X[iiw,] # TODO I fixed this
+        centroid<-as.numeric(as.character(X[iiw,]))
       } else if(length(iiw)>1) {
         centroid<-apply(X[iiw,],2,sum)
       } else {
@@ -99,11 +100,11 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
     #converged<-(sum(u_new==u)<1) # NOTE: we can loosen the convergence requirements with >1
   }
 
-  # Plot Progression
-  #if(plot_ax){
-   # plot(X[,57],X[,501],main=paste0("s=",s))
-    #lines(W[,57], W[,501],lwd=3,col="red",type="o",pch=15)
-  #}
+  # # Plot Progression TODO: will implement with spathial_2D
+  # if(plot_ax){
+  #   plot(X[,57],X[,501],main=paste0("s=",s))
+  #   lines(W[,57], W[,501],lwd=3,col="red",type="o",pch=15)
+  # }
   return(W)
 }
 

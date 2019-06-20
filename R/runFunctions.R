@@ -34,9 +34,11 @@ spathial_boundary_ids <- function(X, X_labels, mode, from = NULL, to = NULL){
       starting_centroid <- colMeans(X[which(X_labels == from),])
       ending_centroid <- colMeans(X[which(X_labels == to),])
       X <- rbind(X, starting_centroid, ending_centroid)
+      rownames(X)[nrow(X):(nrow(X)-1)]<-c("Centroid2","Centroid1")
       X_labels <- c(X_labels, 0)
       X_labels <- c(X_labels, 0)
-      boundary_ids <- which(X_labels == 0)
+      names(X_labels)<-rownames(X)
+      boundary_ids <- names(which(X_labels == 0,useNames = TRUE))
     }
   }
 
@@ -80,12 +82,14 @@ spathialWay <- function(X, boundary_ids, NC, prefiltering){
   #s<-s_span[1]
 
   models<-list()
+  pb<-txtProgressBar(0,length(s_span),style=3)
   for(i in 1:length(s_span)){
     s<-s_span[i]
-    W<-rkm(X,init_W,s,plot_ax=TRUE)
+    W<-rkm(X,init_W,s,plot_ax=FALSE)
     init_W<-W
     models[[as.character(s)]]<-W
     #models[i,,]<-W
+    setTxtProgressBar(pb,i)
   }
   W_dst_var <- rkm_MS_pathvar(models, s_span, X)
   s_elb_id <- find_elbow(cbind(s_span, W_dst_var))
