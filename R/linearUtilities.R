@@ -63,13 +63,20 @@ initMedoids <- function(X, n, init_type, boundary_ids){
 #' @export
 find_elbow <- function(f){
   ps <- array(c(f[1,1], f[1,2]), dim = c(2))
-  pe <- array(c(f[dim(f)[1],1], f[dim(f)[1],2]), dim = c(2))
-  p_line_dst = array(data = 0.0, dim(f)[1]-2)
-  for(i in (2:dim(f)[1]-1)){
-    p = array(c(f[i,0],f[i,1]), dim= c(2))
-    p_line_dst[i-1] = norm(crossprod(as.matrix(pe-ps),as.matrix(ps-p))/norm(as.matrix(pe-ps)))
+  pe <- array(c(f[nrow(f),1], f[nrow(f),2]), dim = c(2))
+  p_line_dst = array(data = 0.0, (nrow(f)-2))
+  for(i in (2:(nrow(f)-1))){
+    p <- array(c(f[i,1],f[i,2]), dim= c(2))
+
+    mtx_1 <- pe-ps
+    mtx_2 <- ps-p
+    mtx_3 <- pe-ps
+    cp <- ((mtx_1[1]*mtx_2[2]) - (mtx_1[2]*mtx_2[1]))
+    den <- norm(as.matrix(cp), "F")
+    num <- norm(as.matrix(mtx_3), "F")
+
+    p_line_dst[i-1] <- (den / num)
   }
   elb_id = (which.max(p_line_dst)) + 1
   return(elb_id)
 }
-

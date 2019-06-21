@@ -76,7 +76,7 @@ spathialWay <- function(X, boundary_ids, NC, prefiltering){
   init_W<-X[waypoint_ids,]
 
   ### Annealing with rkm
-  s_span<-pracma::logspace(5,-5,n=NC)
+  s_span<-pracma::logspace(5,-5)  #REMOVED ,n=NC -- the number of paths generated is different from the number of waypoint for each of them
   s_span<-c(s_span,0)
   #models<-array(data=NA,dim=c(length(s_span),NC+2,ncol(X)))
   #s<-s_span[1]

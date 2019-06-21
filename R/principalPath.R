@@ -234,10 +234,14 @@ rkm_MS_pathvar <- function(models, s_span, X){
   for(i in (1:length(models))){
     W = models[[i]]
     W=as.matrix(W)
-    W_diff <- W[2:dim(W)[1],] - W[1:(dim(W)[1]-1),]
+    W_diff <- W[2:nrow(W),] - W[1:(nrow(W)-1),]
     W_dst=apply(W_diff, 1, function(x) norm(as.matrix(x),"F"))
-    varp <- function(x) mean((x-mean(x))^2) #TODO: create a function
-    W_dst_var[i] = varp(W_dst)
+    #varp <- function(x) mean((x-mean(x))^2) #TODO: create a function
+    W_dst_var[i] = pvar(W_dst)
   }
   return(W_dst_var)
+}
+
+pvar <- function(x) {
+  sum((x - mean(x))**2) / length(x)
 }
