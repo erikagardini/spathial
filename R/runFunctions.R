@@ -118,9 +118,24 @@ spathial_labels <- function(X, X_labels, ppath){
 #' @param [ndarray float] ppath: waypoints
 #' @return [ndarray float] 2D_ppath: 2D coordinates of the waypoints
 #' @export
-spathial_2D <- function(points){
-  library(Rtsne)
+spathial_2D_plot <- function(X, X_labels, ppath){
+
+  ppath_labels <- array(data = -1, dim=(nrow(ppath)-2))
+
+  total_labels <- c(X_labels, ppath_labels)
+  all_points <- rbind(X, ppath[2:(nrow(ppath)-1), ])
+
+  library(Rtsne())
   set.seed(1)
-  points_2D <- Rtsne(as.matrix(points), dims = 2, perplexity = 5)
-  return(points_2D)
+  tsne_res <- Rtsne(as.matrix(all_points), dims = 2, perplexity = 50)
+  points_2D <- tsne_res$Y
+
+  X_2D <- points_2D[which(total_labels != -1 & total_labels != 0),]
+  centroids_2D <- points_2D[which(total_labels == 0),]
+  ppath_2D <- points_2D[which(total_labels == -1),]
+  ppath_2D <- rbind(centroids_2D[1,], ppath_2D, centroids_2D[2,])
+
+  plot(X_2D[,1],X_2D[,2], col=X_labels)
+  points(centroids_2D[,1],centroids_2D[,2], col="black", pch=3)
+  lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch=15)
 }
