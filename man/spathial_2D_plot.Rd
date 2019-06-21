@@ -4,13 +4,14 @@
 \alias{spathial_2D_plot}
 \title{2D spathial}
 \usage{
-spathial_2D_plot(X, X_labels, ppath)
+spathial_2D_plot(X, X_labels, boundary_ids, ppath)
 }
 \arguments{
-\item{[ndarray}{float] ppath: waypoints}
-}
-\value{
-[ndarray float] 2D_ppath: 2D coordinates of the waypoints
+\item{X}{data points}
+
+\item{X_labels}{labels of the data points}
+
+\item{ppath}{waypoints}
 }
 \description{
 Get the 2D coordinates of each waypoint (using t-SNE algorithm for the dimensionality reduction)

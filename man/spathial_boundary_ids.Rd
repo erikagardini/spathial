@@ -13,13 +13,14 @@ spathial_boundary_ids(X, X_labels, mode, from = NULL, to = NULL)
 
 \item{mode}{strategy for boundary selection
 \itemize{
-  \item 0 - centroids
-  \item 1 - selected by the user
+  \item 1 - centroids
+  \item 2 - selected by the user
+  \item 3 - insert the row name of the starting and ending points
 }}
 
-\item{from}{- starting class}
+\item{from}{- starting class or row name of the starting point}
 
-\item{to}{- ending class}
+\item{to}{- ending class or row name of the ending point}
 }
 \value{
 list

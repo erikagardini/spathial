@@ -7,14 +7,14 @@
 spathial_labels(X, X_labels, ppath)
 }
 \arguments{
-\item{[ndarray}{float] X: data points}
+\item{X}{data points}
 
-\item{[ndarray}{int] X_labels: labels of the data points}
+\item{X_labels}{labels of the data points}
 
-\item{[ndarray}{float] ppath: waypoints}
+\item{ppath}{waypoints}
 }
 \value{
-[ndarray int] ppath_labels: labels of the waypoints
+ppath_labels - labels of the waypoints
 }
 \description{
 Get the label of each waypoint accordin to the neighbourhood

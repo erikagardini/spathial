@@ -16,7 +16,7 @@ spathialWay(X, boundary_ids, NC, prefiltering)
 \item{prefiltering}{a boolean}
 }
 \value{
-spathial waypoints
+ppath - spathial waypoints
 }
 \description{
 Get the coordinates of the waypoints of the principal path

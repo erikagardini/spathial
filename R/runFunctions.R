@@ -6,11 +6,12 @@
 #' @param X_labels labels of the data points
 #' @param mode strategy for boundary selection
 #' \itemize{
-#'   \item 0 - centroids
-#'   \item 1 - selected by the user
+#'   \item 1 - centroids
+#'   \item 2 - selected by the user
+#'   \item 3 - insert the row name of the starting and ending points
 #' }
-#' @param from - starting class
-#' @param to - ending class
+#' @param from - starting class or row name of the starting point
+#' @param to - ending class or row name of the ending point
 #' @return list
 #' \itemize{
 #'   \item boundary ids - The indexes of the boundaries
@@ -19,7 +20,7 @@
 #' }
 #' @export
 spathial_boundary_ids <- function(X, X_labels, mode, from = NULL, to = NULL){
-  if(mode == 1){
+  if(mode == 2){
     X_2D <- spathial_2D(X)
     plot(X_2D$Y[,1],X_2D$Y[,2], pch=20,col="black",main="Click to select path start and end points")
     boundary_ids<-rownames(X)[identify(X,n=2,plot=FALSE)]
@@ -27,7 +28,7 @@ spathial_boundary_ids <- function(X, X_labels, mode, from = NULL, to = NULL){
       X_2D$Y[boundary_ids,1], X_2D$Y[boundary_ids,2],pch="x",col="red",cex=4,
       xlab="Dimension 1",ylab="Dimension 2"
     )
-  }else{
+  }else if(mode == 1){
     if(is.null(from) | is.null(to)){
       stop("You should insert the starting label and the ending label")
     }else{
@@ -40,6 +41,20 @@ spathial_boundary_ids <- function(X, X_labels, mode, from = NULL, to = NULL){
       names(X_labels)<-rownames(X)
       boundary_ids <- names(which(X_labels == 0,useNames = TRUE))
     }
+  }else if(mode == 3){
+    if(is.null(from) | is.null(to)){
+      stop("You should insert the starting label and the ending label")
+    }else if(!(from %in% rownames(X)) ){
+      stop("from is not a valid class")
+    }else if(!(to %in% rownames(X))){
+      stop("to is not a valid class")
+    }else{
+      starting_point <- X[which(rownames(X) == from),]
+      ending_point <- X[which(rownames(X) == to),]
+      boundary_ids <- rownames(rbind(starting_point, ending_point))
+    }
+  }else{
+    stop("Insert a valid mode")
   }
 
   outlist<-list(
@@ -58,7 +73,7 @@ spathial_boundary_ids <- function(X, X_labels, mode, from = NULL, to = NULL){
 #' @param boundary_ids starting and ending points
 #' @param NC number of waypoints
 #' @param prefiltering a boolean
-#' @return spathial waypoints
+#' @return ppath - spathial waypoints
 #' @export
 spathialWay <- function(X, boundary_ids, NC, prefiltering){
   if(prefiltering){
@@ -93,7 +108,8 @@ spathialWay <- function(X, boundary_ids, NC, prefiltering){
   }
   W_dst_var <- rkm_MS_pathvar(models, s_span, X)
   s_elb_id <- find_elbow(cbind(s_span, W_dst_var))
-  return(models[[s_elb_id]])
+  ppath <- models[[s_elb_id]]
+  return(ppath)
 }
 
 
@@ -101,13 +117,18 @@ spathialWay <- function(X, boundary_ids, NC, prefiltering){
 #'
 #' Get the label of each waypoint accordin to the neighbourhood
 #'
-#' @param [ndarray float] X: data points
-#' @param [ndarray int] X_labels: labels of the data points
-#' @param [ndarray float] ppath: waypoints
-#' @return [ndarray int] ppath_labels: labels of the waypoints
+#' @param X data points
+#' @param X_labels labels of the data points
+#' @param ppath waypoints
+#' @return ppath_labels - labels of the waypoints
 #' @export
 spathial_labels <- function(X, X_labels, ppath){
-  lbl <- knn(X, ppath, X_labels, k=1)
+  library(class)
+  X <- X[which(X_labels != 0),]
+  X_labels <- X_labels[which(X_labels != 0)]
+  ppath_no_centroids <- ppath[2:(nrow(ppath)-1), ]
+  lbl <- knn(X, ppath_no_centroids, cl=X_labels, k=1)
+  plot(c(1:length(lbl)), c(lbl), col=lbl, pch=19)
   return(lbl)
 }
 
@@ -115,10 +136,11 @@ spathial_labels <- function(X, X_labels, ppath){
 #'
 #' Get the 2D coordinates of each waypoint (using t-SNE algorithm for the dimensionality reduction)
 #'
-#' @param [ndarray float] ppath: waypoints
-#' @return [ndarray float] 2D_ppath: 2D coordinates of the waypoints
+#' @param X data points
+#' @param X_labels labels of the data points
+#' @param ppath waypoints
 #' @export
-spathial_2D_plot <- function(X, X_labels, ppath){
+spathial_2D_plot <- function(X, X_labels, boundary_ids, ppath){
 
   ppath_labels <- array(data = -1, dim=(nrow(ppath)-2))
 
@@ -127,15 +149,30 @@ spathial_2D_plot <- function(X, X_labels, ppath){
 
   library(Rtsne())
   set.seed(1)
-  tsne_res <- Rtsne(as.matrix(all_points), dims = 2, perplexity = 50)
+  tsne_res <- Rtsne(as.matrix(all_points), dims = 2, perplexity = 1)
   points_2D <- tsne_res$Y
 
   X_2D <- points_2D[which(total_labels != -1 & total_labels != 0),]
-  centroids_2D <- points_2D[which(total_labels == 0),]
+  boundary_ids_2D <- points_2D[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
   ppath_2D <- points_2D[which(total_labels == -1),]
-  ppath_2D <- rbind(centroids_2D[1,], ppath_2D, centroids_2D[2,])
+  ppath_2D <- rbind(boundary_ids_2D[1,], ppath_2D, boundary_ids_2D[2,])
 
-  plot(X_2D[,1],X_2D[,2], col=X_labels)
-  points(centroids_2D[,1],centroids_2D[,2], col="black", pch=3)
+  plot(X_2D[,1],X_2D[,2], col=X_labels, pch=19)
+  points(boundary_ids_2D[,1],boundary_ids_2D[,2], col="black", pch=3)
   lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch=15)
+}
+
+#' Correlation
+#'
+#' ...
+#'
+#' @param ppath waypoints
+#' @return corr - correlation along the path
+#' @export
+spathial_corr <- function(ppath){
+  ppath_no_centroids <- ppath[2:(nrow(ppath)-1),]
+  correlations <- apply(ppath, 2, function(x){
+    cor(x, c(1:length(x)))
+  })
+  return(sort(correlations, decreasing = TRUE))
 }
