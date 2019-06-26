@@ -31,23 +31,27 @@ spathial_boundary_ids <- function(X, X_labels, mode, from = NULL, to = NULL){
   }else if(mode == 1){
     if(is.null(from) | is.null(to)){
       stop("You should insert the starting label and the ending label")
+    }else if(!(from %in% X_labels)){
+      stop("from is not a valid class")
+    }else if(!(to %in% X_labels)){
+      stop("to is not a valid class")
     }else{
-      starting_centroid <- colMeans(X[which(X_labels == from),])
-      ending_centroid <- colMeans(X[which(X_labels == to),])
+      starting_centroid <- colMeans(X[which(X_labels == from),], na.rm = TRUE)
+      ending_centroid <- colMeans(X[which(X_labels == to),], na.rm = TRUE)
       X <- rbind(X, starting_centroid, ending_centroid)
       rownames(X)[nrow(X):(nrow(X)-1)]<-c("Centroid2","Centroid1")
-      X_labels <- c(X_labels, 0)
-      X_labels <- c(X_labels, 0)
+      X_labels <- c(X_labels, from)
+      X_labels <- c(X_labels, to)
       names(X_labels)<-rownames(X)
-      boundary_ids <- names(which(X_labels == 0,useNames = TRUE))
+      boundary_ids <- rownames(X[grep("Centroid", rownames(X)),])
     }
   }else if(mode == 3){
     if(is.null(from) | is.null(to)){
       stop("You should insert the starting label and the ending label")
     }else if(!(from %in% rownames(X)) ){
-      stop("from is not a valid class")
+      stop("from is not an existing sample")
     }else if(!(to %in% rownames(X))){
-      stop("to is not a valid class")
+      stop("to is not an existing sample")
     }else{
       starting_point <- X[which(rownames(X) == from),]
       ending_point <- X[which(rownames(X) == to),]
@@ -61,11 +65,11 @@ spathial_boundary_ids <- function(X, X_labels, mode, from = NULL, to = NULL){
     X=X,
     X_labels=X_labels,
     boundary_ids=boundary_ids
-    )
+  )
   return(outlist)
 }
 
-#' Compute Principal Path
+#' Principal Path core
 #'
 #' Get the coordinates of the waypoints of the principal path
 #'
@@ -75,7 +79,7 @@ spathial_boundary_ids <- function(X, X_labels, mode, from = NULL, to = NULL){
 #' @param prefiltering a boolean
 #' @return ppath - spathial waypoints
 #' @export
-spathialWay <- function(X, boundary_ids, NC, prefiltering){
+spathial_way <- function(X, boundary_ids, NC, prefiltering){
   if(prefiltering){
     ### Prefilter the data (function pp.rkm_prefilter)
     prefiltered<-rkm_prefilter(X,boundary_ids,plot_ax=TRUE)
@@ -124,8 +128,8 @@ spathialWay <- function(X, boundary_ids, NC, prefiltering){
 #' @export
 spathial_labels <- function(X, X_labels, ppath){
   library(class)
-  X <- X[which(X_labels != 0),]
-  X_labels <- X_labels[which(X_labels != 0)]
+  X_labels <- X_labels[which(! grepl("Centroid", rownames(X)))]
+  X <- X[which(! grepl("Centroid", rownames(X))),]
   ppath_no_centroids <- ppath[2:(nrow(ppath)-1), ]
   lbl <- knn(X, ppath_no_centroids, cl=X_labels, k=1)
   plot(c(1:length(lbl)), c(lbl), col=lbl, pch=19)
@@ -141,11 +145,11 @@ spathial_labels <- function(X, X_labels, ppath){
 #' @param ppath waypoints
 #' @export
 spathial_2D_plot <- function(X, X_labels, boundary_ids, ppath){
-
-  ppath_labels <- array(data = -1, dim=(nrow(ppath)-2))
-
+  ppath <- ppath[2:(nrow(ppath)-1),]
+  rownames(ppath) <- paste("ppath",1:nrow(ppath))
+  ppath_labels <- array(data = -1, dim=(nrow(ppath)))
   total_labels <- c(X_labels, ppath_labels)
-  all_points <- rbind(X, ppath[2:(nrow(ppath)-1), ])
+  all_points <- rbind(X, ppath)
 
   library(Rtsne())
   set.seed(1)
@@ -164,15 +168,112 @@ spathial_2D_plot <- function(X, X_labels, boundary_ids, ppath){
 
 #' Correlation
 #'
-#' ...
+#' Get how much the features correlates with the path
 #'
 #' @param ppath waypoints
 #' @return corr - correlation along the path
 #' @export
 spathial_corr <- function(ppath){
-  ppath_no_centroids <- ppath[2:(nrow(ppath)-1),]
-  correlations <- apply(ppath, 2, function(x){
-    cor(x, c(1:length(x)))
-  })
-  return(sort(correlations, decreasing = TRUE))
+  colnames <- colnames(ppath[,,1])
+  ppath <- array(unlist(ppath),dim=c(NC+2, ncol(X), (negb*negb)))
+
+  correlations <- array(data = 0, dim=(c(dim(ppath)[3], dim(ppath)[2])))
+  corr <- array(data = 0, dim=(dim(ppath)[2]))
+  for(i in (1:dim(ppath)[3])){
+    for(j in (1:dim(ppath)[2])){
+      correlations[i,j] <- cor(ppath[,j,i], c(1:dim(ppath)[1]))
+    }
+  }
+  correlations <- colMeans(correlations)
+  #correlations <- apply(ppath, 3, function(x){
+   # corr <- apply(x, 2, function(y){
+    #  cor(y, c(1:length(y)))
+    #})
+    #return(corr)
+  #})
+  #return(correlations)
+}
+
+#' Compute Principal Path
+#'
+#' Get the coordinates of the waypoints of the principal path
+#'
+#' @param X data points
+#' @param X_labels labels of the data points
+#' @param boundary_ids starting and ending points
+#' @param NC number of waypoints
+#' @param prefiltering a boolean
+#' @param negb the number of nearest nearest point to consider
+#' @return ppath - spathial waypoints
+#' @export
+spathial_way_multiple <- function(X, X_labels, boundary_ids, NC, prefiltering, negb = NULL){
+  if(is.null(negb)){
+    negb <- 1
+  }
+
+  if(negb == 1){
+    ppath <- spathial_way(X, boundary_ids, NC, prefiltering)
+    colnames(ppath) <- colnames(X)
+    perturbed_path <- NULL
+  }
+  else{
+    ppath <- spathial_way(X, boundary_ids, NC, prefiltering)
+    colnames(ppath) <- colnames(X)
+
+    starting_class <- X_labels[which(rownames(X) == boundary_ids[1])]
+    ending_class <- X_labels[which(rownames(X) == boundary_ids[2])]
+
+    message(starting_class)
+    message(ending_class)
+
+    element_starting_class <- X[which(X_labels == starting_class),]
+    element_ending_class <- X[which(X_labels == ending_class),]
+
+    starting_class_neighbour <- find_nearest_points(X[which(rownames(X) == boundary_ids[1]),], element_starting_class, negb)
+    ending_class_neighbour <- find_nearest_points(X[which(rownames(X) == boundary_ids[2]),], element_ending_class, negb)
+
+    message(starting_class_neighbour)
+    message(ending_class_neighbour)
+
+    perturbed_path <- lapply(starting_class_neighbour, function(x){
+      lapply(ending_class_neighbour, function(y){
+        boundary_ids <- c(x, y)
+        message("PP_start")
+        perturbed <- spathial_way(X, boundary_ids, NC, prefiltering)
+        message("PP_completed")
+        colnames(perturbed) <- colnames(X)
+        #return(as.matrix(pp))
+        return(perturbed)
+      })
+    })
+  }
+
+  outlist<-list(
+    ppath=ppath,
+    perturbed_path=perturbed_path
+  )
+  return(outlist)
+}
+
+#' Get the names of the N-nearest points
+#'
+#' Get the name of the nearest point to one specified
+#'
+#' @param point a specific point
+#' @param points the other points
+#' @param negb the number of desired nearest neighbours
+#' @return nearest_name - the name of the nearest points
+#' @export
+find_nearest_points <- function(point, points, negb){
+  library(fields)
+  #distances <- apply(points, 1, function(x){
+    #dist <- sqrt(sum((point-x)^2))
+    #dist <- rdist(point, x)
+    #message(dist)
+    #return(dist)
+  #})
+  distances <- rdist(point, points)
+  ord <- order(distances)
+  nearest_name <- rownames(points[ord[1:negb],])
+  return(nearest_name)
 }

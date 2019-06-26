@@ -13,5 +13,5 @@ spathial_corr(ppath)
 corr - correlation along the path
 }
 \description{
-...
+Get how much the features correlates with the path
 }
