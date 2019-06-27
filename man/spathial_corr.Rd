@@ -4,7 +4,7 @@
 \alias{spathial_corr}
 \title{Correlation}
 \usage{
-spathial_corr(ppath)
+spathial_corr(spathial_res)
 }
 \arguments{
 \item{ppath}{waypoints}

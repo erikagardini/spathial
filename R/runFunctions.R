@@ -97,17 +97,15 @@ spathial_way <- function(X, boundary_ids, NC, prefiltering){
   ### Annealing with rkm
   s_span<-pracma::logspace(5,-5)  #REMOVED ,n=NC -- the number of paths generated is different from the number of waypoint for each of them
   s_span<-c(s_span,0)
-  #models<-array(data=NA,dim=c(length(s_span),NC+2,ncol(X)))
-  #s<-s_span[1]
 
   models<-list()
   pb<-txtProgressBar(0,length(s_span),style=3)
+
   for(i in 1:length(s_span)){
     s<-s_span[i]
     W<-rkm(X,init_W,s,plot_ax=FALSE)
     init_W<-W
     models[[as.character(s)]]<-W
-    #models[i,,]<-W
     setTxtProgressBar(pb,i)
   }
   W_dst_var <- rkm_MS_pathvar(models, s_span, X)
@@ -153,7 +151,7 @@ spathial_2D_plot <- function(X, X_labels, boundary_ids, ppath){
 
   library(Rtsne())
   set.seed(1)
-  tsne_res <- Rtsne(as.matrix(all_points), dims = 2, perplexity = 1)
+  tsne_res <- Rtsne(as.matrix(all_points), dims = 2, perplexity = 50)
   points_2D <- tsne_res$Y
 
   X_2D <- points_2D[which(total_labels != -1 & total_labels != 0),]
@@ -173,25 +171,42 @@ spathial_2D_plot <- function(X, X_labels, boundary_ids, ppath){
 #' @param ppath waypoints
 #' @return corr - correlation along the path
 #' @export
-spathial_corr <- function(ppath){
-  colnames <- colnames(ppath[,,1])
-  ppath <- array(unlist(ppath),dim=c(NC+2, ncol(X), (negb*negb)))
+spathial_corr <- function(spathial_res){
+  library(DescTools)
+  if(length(spathial_res) > 1){
+    z_scores_perturbed_path <- lapply(spathial_res$perturbed_path, function(x){
+      lapply(x, function(y){
+        z_scores <- apply(y, 2, function(z){
+          FisherZ(cor(z, c(1:length(z))))
+        })
+      })
+    })
 
-  correlations <- array(data = 0, dim=(c(dim(ppath)[3], dim(ppath)[2])))
-  corr <- array(data = 0, dim=(dim(ppath)[2]))
-  for(i in (1:dim(ppath)[3])){
-    for(j in (1:dim(ppath)[2])){
-      correlations[i,j] <- cor(ppath[,j,i], c(1:dim(ppath)[1]))
+    count <- 0
+    sum <- array(data=0, dim=c(ncol(spathial_res$ppath)))
+    for(i in (1:length(z_scores_perturbed_path))){
+      A <- z_scores_perturbed_path[[i]]
+      for(j in (1:length(A))){
+        B <- A[[j]]
+        for(k in (1:length(B))){
+          sum[k] <- sum[k] +  B[k]
+        }
+        count <- count + 1
+      }
     }
+    correlations <- sapply(sum, function(x){
+      z_avg <- x/count
+      return(FisherZInv(z_avg))
+    })
+    correlations <- as.list(correlations)
+    names(correlations) <- colnames(spathial_res$ppath)
+  }else{
+    correlations <- lapply(spathial_res$ppath, function(x){
+      cor(x, c(1:length(x)))
+    })
+    names(correlations) <- colnames(spathial_res$ppath)
   }
-  correlations <- colMeans(correlations)
-  #correlations <- apply(ppath, 3, function(x){
-   # corr <- apply(x, 2, function(y){
-    #  cor(y, c(1:length(y)))
-    #})
-    #return(corr)
-  #})
-  #return(correlations)
+  return(correlations)
 }
 
 #' Compute Principal Path
@@ -235,15 +250,16 @@ spathial_way_multiple <- function(X, X_labels, boundary_ids, NC, prefiltering, n
     message(starting_class_neighbour)
     message(ending_class_neighbour)
 
-    perturbed_path <- lapply(starting_class_neighbour, function(x){
-      lapply(ending_class_neighbour, function(y){
-        boundary_ids <- c(x, y)
-        message("PP_start")
-        perturbed <- spathial_way(X, boundary_ids, NC, prefiltering)
-        message("PP_completed")
-        colnames(perturbed) <- colnames(X)
-        #return(as.matrix(pp))
-        return(perturbed)
+    system.time({
+      perturbed_path <- lapply(starting_class_neighbour, function(x){
+        lapply(ending_class_neighbour, function(y){
+          boundary_ids <- c(x, y)
+          message("PP_start")
+          perturbed <- spathial_way(X, boundary_ids, NC, prefiltering)
+          message("PP_completed")
+          colnames(perturbed) <- colnames(X)
+          return(perturbed)
+        })
       })
     })
   }
@@ -266,13 +282,11 @@ spathial_way_multiple <- function(X, X_labels, boundary_ids, NC, prefiltering, n
 #' @export
 find_nearest_points <- function(point, points, negb){
   library(fields)
-  #distances <- apply(points, 1, function(x){
-    #dist <- sqrt(sum((point-x)^2))
-    #dist <- rdist(point, x)
-    #message(dist)
-    #return(dist)
-  #})
-  distances <- rdist(point, points)
+  distances <- apply(points, 1, function(x){
+    dist <- sqrt(sum((point-x)^2))
+    return(dist)
+  })
+  #distances <- rdist(point, points)
   ord <- order(distances)
   nearest_name <- rownames(points[ord[1:negb],])
   return(nearest_name)

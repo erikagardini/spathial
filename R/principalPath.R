@@ -58,6 +58,7 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
     C<-matrix(NA,nrow=NC,ncol=d)
     rownames(C)<-rownames(B)
     colnames(C)<-colnames(X)
+
     for(i in 1:NC){ # NOTE: here I took some liberties, recheck (also it can be optimized and improved)
       ii<-rownames(C)[i]
       iiw<-which(u==ii)
