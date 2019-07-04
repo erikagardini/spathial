@@ -4,7 +4,7 @@
 \alias{spathial_2D_plot}
 \title{2D spathial}
 \usage{
-spathial_2D_plot(X, X_labels, boundary_ids, ppath)
+spathial_2D_plot(X, X_labels, boundary_ids, spathial_res, perplexity_value)
 }
 \arguments{
 \item{X}{data points}

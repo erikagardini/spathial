@@ -4,7 +4,7 @@
 \alias{spathial_labels}
 \title{Find labels}
 \usage{
-spathial_labels(X, X_labels, ppath)
+spathial_labels(X, X_labels, spathial_res)
 }
 \arguments{
 \item{X}{data points}

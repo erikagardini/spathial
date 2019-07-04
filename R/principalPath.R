@@ -10,6 +10,7 @@
 #' @references 'Finding Prinicpal Paths in Data Space', M.J.Ferrarotti, W.Rocchia, S.Decherchi, IEEE transactions on neural networks and learning systems 2018
 #' @export
 rkm <- function(X, init_W, s, plot_ax=FALSE){
+  message(Sys.time())
   # Extract useful info from args
   N<-nrow(X)
   d<-ncol(X)
@@ -45,9 +46,10 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
   ### Iterate the minimizer
   converged<-FALSE
   it<-0
+  message("WHILE")
+  message(Sys.time())
   while(!converged){
     it<-it+1
-    #message("Iteration ",it)
 
     # Compute Cardinality
     W_card<-setNames(rep(0,NC+2),rownames(init_W))
@@ -58,19 +60,22 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
     C<-matrix(NA,nrow=NC,ncol=d)
     rownames(C)<-rownames(B)
     colnames(C)<-colnames(X)
-
-    for(i in 1:NC){ # NOTE: here I took some liberties, recheck (also it can be optimized and improved)
-      ii<-rownames(C)[i]
-      iiw<-which(u==ii)
-      if(length(iiw)==1){
-        centroid<-as.numeric(as.character(X[iiw,]))
-      } else if(length(iiw)>1) {
-        centroid<-apply(X[iiw,],2,sum)
-      } else {
-        centroid<-rep(0,ncol(X))
-      }
-      C[i,]<-centroid
+    message("FOR")
+    message(Sys.time())
+    for(i in 1:NC){
+      C[i,] <- colSums(X[which(u==rownames(C)[i]),])
     }
+    message(Sys.time())
+
+    # message("SAPPLY")
+    # message(Sys.time())
+    # AAA <- sapply(rownames(B), function(ii){
+    #    colSums(X[which(u==ii),])
+    # })
+    # message(Sys.time())
+    # C <- t(C)
+    # rownames(C)<-rownames(B)
+    # colnames(C)<-colnames(X)
 
     # Construct K-means Heassian
     AX<-diag(W_card[2:(length(W_card)-1)])
@@ -106,6 +111,7 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
   #   plot(X[,57],X[,501],main=paste0("s=",s))
   #   lines(W[,57], W[,501],lwd=3,col="red",type="o",pch=15)
   # }
+  message(Sys.time())
   return(W)
 }
 

@@ -80,6 +80,8 @@ spathial_boundary_ids <- function(X, X_labels, mode, from = NULL, to = NULL){
 #' @return ppath - spathial waypoints
 #' @export
 spathial_way <- function(X, boundary_ids, NC, prefiltering){
+  message("spathial way")
+
   if(prefiltering){
     ### Prefilter the data (function pp.rkm_prefilter)
     prefiltered<-rkm_prefilter(X,boundary_ids,plot_ax=TRUE)
@@ -94,20 +96,24 @@ spathial_way <- function(X, boundary_ids, NC, prefiltering){
   waypoint_ids<-c(boundary_ids[1],waypoint_ids,boundary_ids[2])
   init_W<-X[waypoint_ids,]
 
+  message("medoids initialized")
+
   ### Annealing with rkm
   s_span<-pracma::logspace(5,-5)  #REMOVED ,n=NC -- the number of paths generated is different from the number of waypoint for each of them
   s_span<-c(s_span,0)
 
   models<-list()
-  pb<-txtProgressBar(0,length(s_span),style=3)
 
+  pb <- txtProgressBar(min = 0, max = length(s_span), style = 3)
   for(i in 1:length(s_span)){
     s<-s_span[i]
     W<-rkm(X,init_W,s,plot_ax=FALSE)
     init_W<-W
     models[[as.character(s)]]<-W
-    setTxtProgressBar(pb,i)
+    setTxtProgressBar(pb, i)
   }
+  close(pb)
+
   W_dst_var <- rkm_MS_pathvar(models, s_span, X)
   s_elb_id <- find_elbow(cbind(s_span, W_dst_var))
   ppath <- models[[s_elb_id]]
@@ -124,7 +130,8 @@ spathial_way <- function(X, boundary_ids, NC, prefiltering){
 #' @param ppath waypoints
 #' @return ppath_labels - labels of the waypoints
 #' @export
-spathial_labels <- function(X, X_labels, ppath){
+spathial_labels <- function(X, X_labels, spathial_res){
+  ppath <- spathial_res$ppath
   library(class)
   X_labels <- X_labels[which(! grepl("Centroid", rownames(X)))]
   X <- X[which(! grepl("Centroid", rownames(X))),]
@@ -142,7 +149,8 @@ spathial_labels <- function(X, X_labels, ppath){
 #' @param X_labels labels of the data points
 #' @param ppath waypoints
 #' @export
-spathial_2D_plot <- function(X, X_labels, boundary_ids, ppath){
+spathial_2D_plot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_value){
+  ppath <- spathial_res$ppath
   ppath <- ppath[2:(nrow(ppath)-1),]
   rownames(ppath) <- paste("ppath",1:nrow(ppath))
   ppath_labels <- array(data = -1, dim=(nrow(ppath)))
@@ -151,7 +159,7 @@ spathial_2D_plot <- function(X, X_labels, boundary_ids, ppath){
 
   library(Rtsne())
   set.seed(1)
-  tsne_res <- Rtsne(as.matrix(all_points), dims = 2, perplexity = 50)
+  tsne_res <- Rtsne(as.matrix(all_points), dims = 2, perplexity = perplexity_value)
   points_2D <- tsne_res$Y
 
   X_2D <- points_2D[which(total_labels != -1 & total_labels != 0),]
@@ -232,36 +240,38 @@ spathial_way_multiple <- function(X, X_labels, boundary_ids, NC, prefiltering, n
     perturbed_path <- NULL
   }
   else{
-    ppath <- spathial_way(X, boundary_ids, NC, prefiltering)
-    colnames(ppath) <- colnames(X)
 
     starting_class <- X_labels[which(rownames(X) == boundary_ids[1])]
     ending_class <- X_labels[which(rownames(X) == boundary_ids[2])]
-
-    message(starting_class)
-    message(ending_class)
 
     element_starting_class <- X[which(X_labels == starting_class),]
     element_ending_class <- X[which(X_labels == ending_class),]
 
     starting_class_neighbour <- find_nearest_points(X[which(rownames(X) == boundary_ids[1]),], element_starting_class, negb)
     ending_class_neighbour <- find_nearest_points(X[which(rownames(X) == boundary_ids[2]),], element_ending_class, negb)
+    message("ready")
 
-    message(starting_class_neighbour)
-    message(ending_class_neighbour)
-
-    system.time({
-      perturbed_path <- lapply(starting_class_neighbour, function(x){
-        lapply(ending_class_neighbour, function(y){
-          boundary_ids <- c(x, y)
-          message("PP_start")
-          perturbed <- spathial_way(X, boundary_ids, NC, prefiltering)
-          message("PP_completed")
-          colnames(perturbed) <- colnames(X)
-          return(perturbed)
-        })
+    message(Sys.time())
+    perturbed_path <- lapply(starting_class_neighbour, function(x){
+      message(x)
+      # library("parallel")
+      # n_cores <- detectCores() - 1
+      # cl <- makeCluster(n_cores)
+      lapply(ending_class_neighbour, function(y){
+        boundary_ids <- c(x, y)
+        message(Sys.time())
+        perturbed <- spathial_way(X, boundary_ids, NC, prefiltering)
+        message(Sys.time())
+        colnames(perturbed) <- colnames(X)
+        return(perturbed)
       })
+
+      #stopCluster(cl)
     })
+    message(Sys.time())
+
+    ppath <- perturbed_path[[1]][[1]]
+    colnames(ppath) <- colnames(X)
   }
 
   outlist<-list(
@@ -281,13 +291,11 @@ spathial_way_multiple <- function(X, X_labels, boundary_ids, NC, prefiltering, n
 #' @return nearest_name - the name of the nearest points
 #' @export
 find_nearest_points <- function(point, points, negb){
-  library(fields)
-  distances <- apply(points, 1, function(x){
-    dist <- sqrt(sum((point-x)^2))
-    return(dist)
-  })
-  #distances <- rdist(point, points)
-  ord <- order(distances)
+  dst<-pracma::distmat(
+    as.matrix(point),
+    as.matrix(points)
+  )
+  ord <- order(dst)
   nearest_name <- rownames(points[ord[1:negb],])
   return(nearest_name)
 }
