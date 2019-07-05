@@ -4,14 +4,19 @@
 \alias{spathial_2D_plot}
 \title{2D spathial}
 \usage{
-spathial_2D_plot(X, X_labels, boundary_ids, spathial_res, perplexity_value)
+spathial_2D_plot(X, X_labels, boundary_ids, spathial_res,
+  perplexity_value = NULL)
 }
 \arguments{
 \item{X}{data points}
 
 \item{X_labels}{labels of the data points}
 
-\item{ppath}{waypoints}
+\item{boundary_ids}{waypoints}
+
+\item{spathial_res}{TODO}
+
+\item{perplexity_value}{The value for TSNE perplexity (default is nrsamples*3/50)}
 }
 \description{
 Get the 2D coordinates of each waypoint (using t-SNE algorithm for the dimensionality reduction)

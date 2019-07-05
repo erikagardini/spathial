@@ -10,34 +10,41 @@ X_labels <- data[,dim(data)[2]]
 rownames(X)<-data[,1]
 rownames(X)<-gsub("\\.","-",rownames(X))
 
-#SUBSET OF ENTRIES, JUST FOR TESTING
-#X <- X[438:445,1:5]
-#X_labels <- X_labels[438:445]
+# # SUBSET OF ENTRIES, JUST FOR TESTING
+# X <- X[438:445,1:5]
+# X_labels <- X_labels[438:445]
 
-#Variance filtering
-# varFiltering <- TRUE
-# nvars <- 10000
-# if(varFiltering){
-#   vars <- apply(X,2,var)
-#   topfeatures <- names(sort(vars, dec=TRUE))[1:nvars]
-#   X <- X[,topfeatures]
-# }
+# Variance filtering
+varFiltering <- TRUE
+nvars <- 1000
+if(varFiltering){
+  vars <- apply(X,2,var)
+  topfeatures <- names(sort(vars, dec=TRUE))[1:nvars]
+  X <- X[,topfeatures]
+}
 
-#Choose the starting and the ending points
+# Choose the starting and the ending points
 boundary_init <- spathial_boundary_ids(X, X_labels, mode=1, from=2, to=1)
 boundary_ids <- boundary_init$boundary_ids
 X <- boundary_init$X
 X_labels <- boundary_init$X_labels
 
-#Compute spathial
-spathial_res <- spathial_way_multiple(X, X_labels, boundary_ids, NC, prefiltering=FALSE, negb = 2)
+# Compute spathial
+# TO DO for Erika: explain better what is negb
+spathial_res <- spathial_way_multiple(X, X_labels, boundary_ids, NC, prefiltering=FALSE, negb = 1)
+
+
+
+
 #Labels for each waypoint with knn
 ppath_labels <- spathial_labels(X, X_labels, spathial_res)
-#Plot the path in 2D using tsne
-spathial_2D_plot(X, X_labels, boundary_ids, spathial_res, 30)
+#Plot the path in 2D using Rtsne
+spathial_2D_plot(X, X_labels, boundary_ids, spathial_res)
 
-save(spathial_res, file="res_parallelized.rda")
 
+
+# save(spathial_res, file="res_parallelized.rda")
+#
 # load(file = "~/spathial/spathial_res.rda")
 #
 # perturbed_path <- spathial_res

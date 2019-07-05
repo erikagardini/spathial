@@ -18,7 +18,7 @@ spathial_way_multiple(X, X_labels, boundary_ids, NC, prefiltering,
 
 \item{prefiltering}{a boolean}
 
-\item{negb}{the number of nearest nearest point to consider}
+\item{negb}{the number of desired nearest neighbours}
 }
 \value{
 ppath - spathial waypoints

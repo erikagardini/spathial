@@ -10,7 +10,8 @@
 #' @references 'Finding Prinicpal Paths in Data Space', M.J.Ferrarotti, W.Rocchia, S.Decherchi, IEEE transactions on neural networks and learning systems 2018
 #' @export
 rkm <- function(X, init_W, s, plot_ax=FALSE){
-  message(Sys.time())
+  X<-as.matrix(X)
+
   # Extract useful info from args
   N<-nrow(X)
   d<-ncol(X)
@@ -44,10 +45,9 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
 
 
   ### Iterate the minimizer
+  names_of_rows<-rownames(B)
   converged<-FALSE
   it<-0
-  message("WHILE")
-  message(Sys.time())
   while(!converged){
     it<-it+1
 
@@ -56,26 +56,15 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
     tu<-table(u)
     W_card[names(tu)]<-tu
 
-    # Compute Centroid Matrix
+    ### Compute Centroid Matrix
     C<-matrix(NA,nrow=NC,ncol=d)
-    rownames(C)<-rownames(B)
+    rownames(C)<-names_of_rows
     colnames(C)<-colnames(X)
-    message("FOR")
-    message(Sys.time())
-    for(i in 1:NC){
-      C[i,] <- colSums(X[which(u==rownames(C)[i]),])
+    # Speed up with a matrixStats solution
+    for (i in 1:nrow(C)) {
+      indexes <- which(u == names_of_rows[i])
+      C[i, ] <-  matrixStats::colSums2(X, rows = indexes)
     }
-    message(Sys.time())
-
-    # message("SAPPLY")
-    # message(Sys.time())
-    # AAA <- sapply(rownames(B), function(ii){
-    #    colSums(X[which(u==ii),])
-    # })
-    # message(Sys.time())
-    # C <- t(C)
-    # rownames(C)<-rownames(B)
-    # colnames(C)<-colnames(X)
 
     # Construct K-means Heassian
     AX<-diag(W_card[2:(length(W_card)-1)])
@@ -111,7 +100,7 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
   #   plot(X[,57],X[,501],main=paste0("s=",s))
   #   lines(W[,57], W[,501],lwd=3,col="red",type="o",pch=15)
   # }
-  message(Sys.time())
+  # message(Sys.time())
   return(W)
 }
 

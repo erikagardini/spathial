@@ -96,10 +96,12 @@ spathial_way <- function(X, boundary_ids, NC, prefiltering){
   waypoint_ids<-c(boundary_ids[1],waypoint_ids,boundary_ids[2])
   init_W<-X[waypoint_ids,]
 
-  message("medoids initialized")
+  message("Medoids initialized")
 
   ### Annealing with rkm
-  s_span<-pracma::logspace(5,-5)  #REMOVED ,n=NC -- the number of paths generated is different from the number of waypoint for each of them
+  s_span<-pracma::logspace(5,-5)
+  #REMOVED ,n=NC -- the number of paths generated is different
+  #from the number of waypoint for each of them
   s_span<-c(s_span,0)
 
   models<-list()
@@ -147,9 +149,16 @@ spathial_labels <- function(X, X_labels, spathial_res){
 #'
 #' @param X data points
 #' @param X_labels labels of the data points
-#' @param ppath waypoints
+#' @param boundary_ids waypoints
+#' @param spathial_res TODO
+#' @param perplexity_value The value for TSNE perplexity (default is nrsamples*3/50)
 #' @export
-spathial_2D_plot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_value){
+spathial_2D_plot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_value=NULL){
+  # Exception handler if the user doesn't specificy perplexity
+  if(is.null(perplexity_value)){
+    perplexity_value<-ceiling(nrow(X)*3/50)
+    #message("Perplexity is ",perplexity_value)
+  }
   ppath <- spathial_res$ppath
   ppath <- ppath[2:(nrow(ppath)-1),]
   rownames(ppath) <- paste("ppath",1:nrow(ppath))
@@ -174,7 +183,7 @@ spathial_2D_plot <- function(X, X_labels, boundary_ids, spathial_res, perplexity
 
 #' Correlation
 #'
-#' Get how much the features correlates with the path
+#' Get how much the features correlate with the path
 #'
 #' @param ppath waypoints
 #' @return corr - correlation along the path
@@ -226,7 +235,7 @@ spathial_corr <- function(spathial_res){
 #' @param boundary_ids starting and ending points
 #' @param NC number of waypoints
 #' @param prefiltering a boolean
-#' @param negb the number of nearest nearest point to consider
+#' @param negb the number of desired nearest neighbours
 #' @return ppath - spathial waypoints
 #' @export
 spathial_way_multiple <- function(X, X_labels, boundary_ids, NC, prefiltering, negb = NULL){
@@ -259,9 +268,9 @@ spathial_way_multiple <- function(X, X_labels, boundary_ids, NC, prefiltering, n
       # cl <- makeCluster(n_cores)
       lapply(ending_class_neighbour, function(y){
         boundary_ids <- c(x, y)
-        message(Sys.time())
+        #message(Sys.time())
         perturbed <- spathial_way(X, boundary_ids, NC, prefiltering)
-        message(Sys.time())
+        #message(Sys.time())
         colnames(perturbed) <- colnames(X)
         return(perturbed)
       })
