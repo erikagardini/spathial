@@ -30,7 +30,7 @@ X <- boundary_init$X
 X_labels <- boundary_init$X_labels
 
 # Compute spathial
-# TO DO for Erika: explain better what is negb
+# TO DO for Erika: explain better what is negb (in the manuals)
 spathial_res <- spathial_way_multiple(X, X_labels, boundary_ids, NC, prefiltering=FALSE, negb = 1)
 
 
