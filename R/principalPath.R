@@ -1,14 +1,39 @@
-#' rkm
-#'
-#' Regularized K-means for principal path, MINIMIZER.
-#'
-#' @param X a data matrix
-#' @param init_W initial waypoints matrix
-#' @param s regularization parameter
-#' @param plot_ax boolean, whether to plot a graph
-#' @return W - final waypoints matrix
-#' @references 'Finding Prinicpal Paths in Data Space', M.J.Ferrarotti, W.Rocchia, S.Decherchi, IEEE transactions on neural networks and learning systems 2018
-#' @export
+#Get the coordinates of the waypoints of the principal path
+compute_spathial <- function(X, boundary_ids, NC){
+  message("spathial way")
+
+  ### Initialize waypoints
+  waypoint_ids<-initMedoids(X, NC, 'kpp', boundary_ids)
+  waypoint_ids<-c(boundary_ids[1],waypoint_ids,boundary_ids[2])
+  init_W<-X[waypoint_ids,]
+
+  message("Medoids initialized")
+
+  ### Annealing with rkm
+  s_span<-pracma::logspace(5,-5)
+  s_span<-c(s_span,0)
+
+  models<-list()
+  message(Sys.time())
+
+  pb <- txtProgressBar(min = 0, max = length(s_span), style = 3)
+  for(i in 1:length(s_span)){
+    s<-s_span[i]
+    W<-rkm(X,init_W,s,plot_ax=FALSE)
+    init_W<-W
+    models[[as.character(s)]]<-W
+    setTxtProgressBar(pb, i)
+  }
+  close(pb)
+
+  message(Sys.time())
+  W_dst_var <- rkm_MS_pathvar(models, s_span, X)
+  s_elb_id <- find_elbow(cbind(s_span, W_dst_var))
+  ppath <- models[[s_elb_id]]
+  return(ppath)
+}
+
+#Regularized K-means for principal path, MINIMIZER.
 rkm <- function(X, init_W, s, plot_ax=FALSE){
   X<-as.matrix(X)
 
@@ -92,42 +117,17 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
     # Check for convergence
     converged<-all(u_new==u)
     u<-u_new
-    #converged<-(sum(u_new==u)<1) # NOTE: we can loosen the convergence requirements with >1
   }
-
-  # # Plot Progression TODO: will implement with spathial_2D
-  # if(plot_ax){
-  #   plot(X[,57],X[,501],main=paste0("s=",s))
-  #   lines(W[,57], W[,501],lwd=3,col="red",type="o",pch=15)
-  # }
-  # message(Sys.time())
   return(W)
 }
 
-#' rkm_prefilter
-#'
-#' Regularized K-means for principal path: prefiltering
-#'
-#' @param X a data matrix
-#' @param boundary_ids names of the start and ending points, to be treated
-#' separately
-#' @param Nf parameter Nf (requires description)
-#' @param k parameter k (requires description)
-#' @param T parameter T (requires description)
-#' @param plot_ax boolean, whether the post-filtering graph should be plotted
-#' @return A list of objects
-#' \itemize{
-#'   \item X_filtered - The filtered data matrix
-#'   \item boundary_ids_filtered - The filtered boundary ids
-#'   \item X_garbage - The data matrix that was discarded
-#' }
-#' @export
-rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1,
-                          plot_ax=FALSE){
-  N=nrow(X)
-  d=ncol(X)
+#Regularized K-means for principal path: prefiltering
+rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1){
+  N <- nrow(X)
+  d <- ncol(X)
+  n <- Nf - 2
   # Pick Nf medoids with k-means++ and compute pairwise distance matrix
-  med_ids<-initMedoids(X,n=Nf-2,init_type="kpp",boundary_ids=boundary_ids)
+  med_ids<-initMedoids(X,n,init_type="kpp",boundary_ids)
   med_ids<-c(boundary_ids[1],med_ids,boundary_ids[2])
   medmed_dst<-as.matrix(dist(X[med_ids,],method="euclidean"))^2
 
@@ -145,11 +145,7 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1,
   medmed_dst_p[Nf,1]<-0 # NOTE: not sure why this is done
 
   # Find shortest path using dijkstra
-  # NOTE: I didn't calculate the predecessors and simply got the shortest path
   g<-graph.adjacency(medmed_dst_p, weighted=TRUE)
-  # NOTE: it is unnecessary to calculate the distances, but it could become
-  # useful in the future, so I leave the code below:
-  # path_dst<-igraph::distances(g,v=1,algorithm="dijkstra")
   path<-igraph::shortest_paths(g,from=1,to=ncol(medmed_dst_p))
   path<-names(path$vpath[[1]])
 
@@ -168,63 +164,23 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1,
   Xmed_dst<-Xmed_dst^2
   rownames(Xmed_dst)<-rownames(X)
   colnames(Xmed_dst)<-to_keep_ids
+
   # Select minimum distance medoids
   u<-colnames(Xmed_dst)[apply(Xmed_dst,1,which.min)]
   filter_mask<-setNames(rep(FALSE,N),rownames(X))
   filter_mask[u%in%path]<-TRUE
 
-  # NOTE: Convert boundary indices not necessary anymore,
-  # I simply leveraged the object names power of R to avoid these tricks
   boundary_ids_filtered<-boundary_ids
 
-  # Plot filter figure
-  if(plot_ax){
-    xcoord<-X[!filter_mask,1]
-    ycoord<-X[!filter_mask,2]
-    xrange<-abs(max(X[,1])-min(X[,1]))
-    plot(xcoord,ycoord,
-         xlab="Dimension 1",ylab="Dimension 2",
-         main="Post-filtering Path plot",col="orange",pch=1,
-         xlim=c(min(X[,1]),max(X[,1])+xrange/2)) # data filtered out
-    points(X[filter_mask,1],X[filter_mask,2],pch=19,col="blue") # data kept
-    points(X[med_ids,1],X[med_ids,2],col="red",pch=15) # filter medoids
-    points(X[to_filter_ids, 1], X[to_filter_ids, 2],pch="x",cex=1) # filter medoids dropped
-    lines(X[path,1], X[path,2],col="darkgreen",lwd=3,pch=19,type="o") # filter shortest path
-    text(X[filter_mask,][boundary_ids_filtered,1],
-         X[filter_mask,][boundary_ids_filtered,2],
-         labels=c("B1","B2"),font=2,cex=1.3,col="grey") # Boundary samples
-    legend("right",
-           legend=c(
-             "data filtered out",
-             "data kept",
-             "filter medoids",
-             "filter medoids dropped",
-             "filter shortest path",
-             "boundary samples"
-           ),bg="#FFFFFF22",
-           pch=c(1,19,15,4,19,66),
-           col=c("orange","blue","red","black","darkgreen","grey"),
-           lty=c(0,0,0,0,1,0),lwd=c(0,0,0,0,2,0)
-    )
-  }
   # Return ouput
   outlist<-list(
-    X_filtered=X[filter_mask,],
-    boundary_ids_filtered=boundary_ids_filtered,
-    X_garbage=X[!filter_mask,]
+    filter_mask=filter_mask,
+    boundary_ids_filtered=boundary_ids_filtered
   )
   return(outlist)
 }
 
-#' Model Selection
-#'
-#' Regularized K-menans for principal path, MODEL SELECTION, variance on waypoints interdistance.
-#'
-#' @param modelsmatrix with path models, shape, N_models x N x (NC+2)
-#' @param s_span array with values of the reg parameter for each model (sorted in decreasing order, with 0 as last value)
-#' @param X data matrix
-#' @return W_dst_var: array with values of variance for each model
-#' @export
+#Regularized K-menans for principal path, MODEL SELECTION, variance on waypoints interdistance.
 rkm_MS_pathvar <- function(models, s_span, X){
   W_dst_var <- array(data = 0.0, dim = length(models))
   for(i in (1:length(models))){

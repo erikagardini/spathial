@@ -3,7 +3,7 @@ set.seed(1)
 # Number of optimization variables i.e. path waypoints
 NC <- 50
 
-myfile<-system.file("extdata", "thyroid_tcga.csv", package = "spathial")
+myfile<-system.file("extdata", "liver_tcga.csv", package = "spathial")
 data<-read.csv(myfile,as.is=TRUE,header=TRUE)
 X <- data[,2:(dim(data)[2]-1)]
 X_labels <- data[,dim(data)[2]]
@@ -11,10 +11,10 @@ rownames(X)<-data[,1]
 rownames(X)<-gsub("\\.","-",rownames(X))
 
 # # SUBSET OF ENTRIES, JUST FOR TESTING
-# X <- X[438:445,1:5]
-# X_labels <- X_labels[438:445]
+# X <- X[430:450,1:5]
+# X_labels <- X_labels[430:450]
 
-# Variance filtering
+#Variance filtering
 varFiltering <- TRUE
 nvars <- 1000
 if(varFiltering){
@@ -24,24 +24,32 @@ if(varFiltering){
 }
 
 # Choose the starting and the ending points
-boundary_init <- spathial_boundary_ids(X, X_labels, mode=1, from=2, to=1)
+boundary_init <- spathialBoundaryIds(X, X_labels, mode=1, from=2, to=1)
 boundary_ids <- boundary_init$boundary_ids
 X <- boundary_init$X
 X_labels <- boundary_init$X_labels
 
+# Prefilter data
+filter_res <- spathialPrefiltering(X, X_labels, boundary_ids)
+
+X_filtered <- filter_res$X_filtered
+X_labels_filtered <- filter_res$X_labels_filtered
+X_garbage <- filter_res$X_garbage
+X_labels_garbage <- filter_res$X_labels_garbage
+boundary_ids_filtered <- filter_res$boundary_ids
+
+# X_filtered <- X
+# X_labels_filtered <- X_labels
+# boundary_ids_filtered <- boundary_ids
+
 # Compute spathial
-# TO DO for Erika: explain better what is negb (in the manuals)
-spathial_res <- spathial_way_multiple(X, X_labels, boundary_ids, NC, prefiltering=FALSE, negb = 1)
-
-
-
+spathial_res <- spathialWay(X_filtered, X_labels_filtered, boundary_ids_filtered, NC, neighbors = 1)
 
 #Labels for each waypoint with knn
-ppath_labels <- spathial_labels(X, X_labels, spathial_res)
+ppath_labels <- spathialLabels(X_filtered, X_labels_filtered, spathial_res)
 #Plot the path in 2D using Rtsne
-spathial_2D_plot(X, X_labels, boundary_ids, spathial_res)
-
-
+#spathialPlot2D(X_filtered, X_labels_filtered, boundary_ids, spathial_res, perplexity_value=30, X_garbage, X_labels_garbage)
+spathialPlot2D(X_filtered, X_labels_filtered, boundary_ids, spathial_res, perplexity_value=30, X_garbage, X_labels_garbage)
 
 # save(spathial_res, file="res_parallelized.rda")
 #

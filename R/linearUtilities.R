@@ -1,14 +1,4 @@
-#' initMedoids
-#'
-#' Initialize NC medoids with init_type rational.
-#'
-#' @param X a data matrix
-#' @param n integer number of medoids to be selected
-#' @param init_type character, the rational to be used
-#' ('uniform' = randomly selected with uniform distribution, 'kpp' = k-means++ algorithm)
-#' @param boundary_ids blacklisted ids that shouldn't be selected
-#' @return A vevtor of medoids selected
-#' @export
+#Initialize NC medoids with init_type rational.
 initMedoids <- function(X, n, init_type, boundary_ids){
   N<-nrow(X)
   d<-ncol(X)
@@ -29,20 +19,6 @@ initMedoids <- function(X, n, init_type, boundary_ids){
       D2<-apply(Xmed_dst,1,min)
       D2_n<-1.0/sum(D2)
 
-      ## NOTE: the following code is the original one but it contains some slow
-      ## procedures in R. I rewrote something similar below. The idea is to
-      ## select a distance with a high chance to be long, and to avoid taking
-      ## the same medoid twice (there is likely an easier way to do this)
-      # accepted<-FALSE
-      # while(!accepted){
-      #   med_id<-sample(1:N,1)
-      #   rnumber<-runif(1)
-      #   if(rnumber<(D2[med_id]*D2_n)){
-      #     accepted<-TRUE
-      #   }
-      # }
-      ## The following line summarizes the previous code without the
-      ## randomness. If randomness is necessary, we will change this
       med_id<-rownames(X)[which.max(D2*D2_n)]
 
       med_ids[i+1]<-med_id
@@ -55,12 +31,8 @@ initMedoids <- function(X, n, init_type, boundary_ids){
   return(med_ids)
 }
 
-#' Find the elbow in a fuction f, as the point on f with max distance
-#' from the line connecting f[0,:] and f[-1,:]
-#'
-#' @param f: function(Nx2 array in the form [x, f(x)])
-#' @return elb_id: index of the elbow
-#' @export
+#Find the elbow in a fuction f, as the point on f with max distance
+#from the line connecting f[0,:] and f[-1,:]
 find_elbow <- function(f){
   ps <- array(c(f[1,1], f[1,2]), dim = c(2))
   pe <- array(c(f[nrow(f),1], f[nrow(f),2]), dim = c(2))
@@ -79,4 +51,15 @@ find_elbow <- function(f){
   }
   elb_id = (which.max(p_line_dst)) + 1
   return(elb_id)
+}
+
+#Get the names of the N-nearest points
+find_nearest_points <- function(point, points, negb){
+  dst<-pracma::distmat(
+    as.matrix(point),
+    as.matrix(points)
+  )
+  ord <- order(dst)
+  nearest_name <- rownames(points[ord[1:negb],])
+  return(nearest_name)
 }
