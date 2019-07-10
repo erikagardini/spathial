@@ -18,9 +18,9 @@ spathialBoundaryIds(X, X_labels, mode, from = NULL, to = NULL)
   \item 3 - insert the row name of the starting and ending points
 }}
 
-\item{from}{- starting class or row name of the starting point}
+\item{from}{starting class or row name of the starting point}
 
-\item{to}{- ending class or row name of the ending point}
+\item{to}{ending class or row name of the ending point}
 }
 \value{
 A list of objects

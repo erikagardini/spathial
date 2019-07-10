@@ -54,12 +54,12 @@ find_elbow <- function(f){
 }
 
 #Get the names of the N-nearest points
-find_nearest_points <- function(point, points, negb){
+find_nearest_points <- function(point, points, neighbors){
   dst<-pracma::distmat(
     as.matrix(point),
     as.matrix(points)
   )
   ord <- order(dst)
-  nearest_name <- rownames(points[ord[1:negb],])
+  nearest_name <- rownames(points[ord[1:neighbors],])
   return(nearest_name)
 }

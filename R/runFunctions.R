@@ -10,8 +10,8 @@
 #'   \item 2 - selected by the user
 #'   \item 3 - insert the row name of the starting and ending points
 #' }
-#' @param from - starting class or row name of the starting point
-#' @param to - ending class or row name of the ending point
+#' @param from starting class or row name of the starting point
+#' @param to ending class or row name of the ending point
 #' @return A list of objects
 #' \itemize{
 #'   \item boundary ids: the indexes of the boundaries
@@ -138,8 +138,8 @@ spathialWay <- function(X, X_labels, boundary_ids, NC, neighbors = NULL){
     element_starting_class <- X[which(X_labels == starting_class),]
     element_ending_class <- X[which(X_labels == ending_class),]
 
-    starting_class_neighbour <- find_nearest_points(X[which(rownames(X) == boundary_ids[1]),], element_starting_class, negb)
-    ending_class_neighbour <- find_nearest_points(X[which(rownames(X) == boundary_ids[2]),], element_ending_class, negb)
+    starting_class_neighbour <- find_nearest_points(X[which(rownames(X) == boundary_ids[1]),], element_starting_class, neighbors)
+    ending_class_neighbour <- find_nearest_points(X[which(rownames(X) == boundary_ids[2]),], element_ending_class, neighbors)
 
     perturbed_path <- lapply(starting_class_neighbour, function(x){
       lapply(ending_class_neighbour, function(y){
@@ -174,16 +174,11 @@ spathialWay <- function(X, X_labels, boundary_ids, NC, neighbors = NULL){
 #' @return ppath_labels - labels of the waypoints
 #' @export
 spathialLabels <- function(X, X_labels, spathial_res){
-  if("class" %in% rownames(installed.packages()) == FALSE){
-    install.packages("class")
-  }
-  library(class)
-
   ppath <- spathial_res$ppath
   X_labels <- X_labels[which(! grepl("Centroid", rownames(X)))]
   X <- X[which(! grepl("Centroid", rownames(X))),]
   ppath_no_centroids <- ppath[2:(nrow(ppath)-1), ]
-  lbl <- knn(X, ppath_no_centroids, cl=X_labels, k=1)
+  lbl <- class::knn(X, ppath_no_centroids, cl=X_labels, k=1)
   plot(c(1:length(lbl)), c(lbl), col=lbl, pch=19)
   return(lbl)
 }
@@ -205,11 +200,6 @@ spathialLabels <- function(X, X_labels, spathial_res){
 #' @param X_labels_garbage the labels of the data points removed during the filtering (if the prefiltering is done)
 #' @export
 spathialPlot2D <- function(X, X_labels, boundary_ids, spathial_res, perplexity_value=NULL, X_garbage=NULL, X_labels_garbage=NULL){
-  # Install the required packages
-  if("Rtsne" %in% rownames(installed.packages()) == FALSE){
-    install.packages("Rtsne")
-  }
-  library(Rtsne())
   set.seed(1)
 
   # Exception handler if the user doesn't specificy perplexity
@@ -221,14 +211,14 @@ spathialPlot2D <- function(X, X_labels, boundary_ids, spathial_res, perplexity_v
   ppath <- ppath[2:(nrow(ppath)-1),]
   rownames(ppath) <- paste("ppath",1:nrow(ppath))
   ppath_labels <- array(data = -1, dim=(nrow(ppath)))
-  total_labels <- c(X_labels_filtered, ppath_labels)
-  all_points <- rbind(X_filtered, ppath)
+  total_labels <- c(X_labels, ppath_labels)
+  all_points <- rbind(X, ppath)
   if(!is.null(X_garbage)){
     total_labels <- c(total_labels, X_labels_garbage)
     all_points <- rbind(all_points, X_garbage)
   }
 
-  tsne_res <- Rtsne(as.matrix(all_points), dims = 2, perplexity = perplexity_value)
+  tsne_res <- Rtsne::Rtsne(as.matrix(all_points), dims = 2, perplexity = perplexity_value)
   points_2D <- tsne_res$Y
 
   X_2D <- points_2D[which(total_labels != -1 & total_labels != 0 & total_labels != -2),]
@@ -239,7 +229,7 @@ spathialPlot2D <- function(X, X_labels, boundary_ids, spathial_res, perplexity_v
     X_garbage_2D <- points_2D[which(total_labels == -2),]
   }
 
-  plot(X_2D[,1],X_2D[,2], col=X_labels_filtered, pch=19)
+  plot(X_2D[,1],X_2D[,2], col=X_labels, pch=19)
   points(boundary_ids_2D[,1],boundary_ids_2D[,2], col="black", pch=3)
   lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch=15)
   if(!is.null(X_garbage)){
@@ -263,17 +253,12 @@ spathialPlot2D <- function(X, X_labels, boundary_ids, spathial_res, perplexity_v
 #'}
 #' @export
 spathialCorrelation <- function(spathial_res){
-  if("DescTools" %in% rownames(installed.packages()) == FALSE){
-    install.packages("DescTools")
-  }
-  library(DescTools)
-
   #Mean of z scores (with Fisher transformation)
-  if(length(spathial_res) > 1){
+  if(!is.null(spathial_res$perturbed_path)){
     z_scores_perturbed_path <- lapply(spathial_res$perturbed_path, function(x){
       lapply(x, function(y){
         z_scores <- apply(y, 2, function(z){
-          FisherZ(cor(z, c(1:length(z))))
+          DescTools::FisherZ(cor(z, c(1:length(z))))
         })
       })
     })
@@ -292,19 +277,21 @@ spathialCorrelation <- function(spathial_res){
     }
     fisher <- sapply(sum, function(x){
       z_avg <- x/count
-      return(FisherZInv(z_avg))
+      return(DescTools::FisherZInv(z_avg))
     })
     fisher <- as.list(fisher)
     names(fisher) <- colnames(spathial_res$ppath)
 
     #Simple mean of correlation
-    correlations <- array(data = 0, dim=(c(dim(ppath)[3], dim(ppath)[2])))
-    for(i in (1:dim(ppath)[3])){
-      for(j in (1:dim(ppath)[2])){
-        correlations[i,j] <- cor(ppath[,j,i], c(1:dim(ppath)[1]))
-      }
-    }
-    correlations <- colMeans(correlations)
+    # correlations <- lapply(spathial_res$perturbed_path, function(x){
+    #   lapply(x, function(y){
+    #     corr <- apply(y, 2, function(z){
+    #       cor(z, c(1:length(z)))
+    #     })
+    #   })
+    # })
+    # correlations <- colMeans(correlations)
+    correlations <- NULL
 
   }else{
     correlations <- lapply(spathial_res$ppath, function(x){
