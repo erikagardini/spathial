@@ -5,7 +5,7 @@
 \title{2D spathial}
 \usage{
 spathialPlot2D(X, X_labels, boundary_ids, spathial_res,
-  perplexity_value = NULL, X_garbage = NULL, X_labels_garbage = NULL)
+  perplexity_value = NULL, mask = NULL)
 }
 \arguments{
 \item{X}{data points}

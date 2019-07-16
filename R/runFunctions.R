@@ -21,18 +21,31 @@
 #' @export
 spathialBoundaryIds <- function(X, X_labels, mode = 2, from = NULL, to = NULL){
   if(mode == 1){
-    tsne_res <- Rtsne::Rtsne(X, dims = 2, perplexity = 30)
-    X_2D <- tsne_res$Y
-    plot(X_2D[,1],X_2D[,2], col=X_labels, pch=19, main="Click to select path start and end points")
-    boundary_ids<-rownames(X)[identify(X_2D,n=2,plot=FALSE)]
-    points(
-      X_2D[which(rownames(X) == boundary_ids[1]),1], X_2D[which(rownames(X) == boundary_ids[1]),2],pch="x",col="green",cex=4,
-      xlab="Dimension 1",ylab="Dimension 2"
-    )
-    points(
-      X_2D[which(rownames(X) == boundary_ids[2]),1], X_2D[which(rownames(X) == boundary_ids[2]),2],pch="x",col="green",cex=4,
-      xlab="Dimension 1",ylab="Dimension 2"
-    )
+    if(ncol(X) == 2){
+      plot(X[,1],X[,2], col=X_labels, pch=19, main="Click to select path start and end points")
+      boundary_ids<-rownames(X)[identify(X,n=2,plot=FALSE)]
+      points(
+        X[which(rownames(X) == boundary_ids[1]),1], X[which(rownames(X) == boundary_ids[1]),2],pch="x",col="green",cex=4,
+        xlab="Dimension 1",ylab="Dimension 2"
+      )
+      points(
+        X[which(rownames(X) == boundary_ids[2]),1], X[which(rownames(X) == boundary_ids[2]),2],pch="x",col="green",cex=4,
+        xlab="Dimension 1",ylab="Dimension 2"
+      )
+    }else{
+      tsne_res <- Rtsne::Rtsne(X, dims = 2, perplexity = 30)
+      X_2D <- tsne_res$Y
+      plot(X_2D[,1],X_2D[,2], col=X_labels, pch=19, main="Click to select path start and end points")
+      boundary_ids<-rownames(X)[identify(X_2D,n=2,plot=FALSE)]
+      points(
+        X_2D[which(rownames(X) == boundary_ids[1]),1], X_2D[which(rownames(X) == boundary_ids[1]),2],pch="x",col="green",cex=4,
+        xlab="Dimension 1",ylab="Dimension 2"
+      )
+      points(
+        X_2D[which(rownames(X) == boundary_ids[2]),1], X_2D[which(rownames(X) == boundary_ids[2]),2],pch="x",col="green",cex=4,
+        xlab="Dimension 1",ylab="Dimension 2"
+      )
+    }
   }else if(mode == 2){
     if(is.null(from) | is.null(to)){
       stop("You should insert the starting label and the ending label")
@@ -92,22 +105,9 @@ spathialBoundaryIds <- function(X, X_labels, mode = 2, from = NULL, to = NULL){
 #' @export
 spathialPrefiltering <- function(X, X_labels, boundary_ids){
   prefiltered<-rkm_prefilter(X, boundary_ids)
-  # X_filtered<-X[prefiltered$filter_mask,]
-  # X_labels_filtered <- X_labels[prefiltered$filter_mask]
-  # X_garbage<-X[!prefiltered$filter_mask,]
-  # X_labels_garbage<-X_labels[!prefiltered$filter_mask]
-  # X_labels_garbage <- sapply(X_labels_garbage, function(x){
-  #   return(-2)
-  # })
-  #boundary_ids<-prefiltered$boundary_ids_filtered
-  #rm(prefiltered)
 
   outlist<-list(
     mask=prefiltered$filter_mask,
-    # X_filtered=X_filtered,
-    # X_labels_filtered=X_labels_filtered,
-    # X_garbage=X_garbage,
-    # X_labels_garbage=X_labels_garbage,
     boundary_ids=prefiltered$boundary_ids_filtered
   )
   return(outlist)
@@ -135,7 +135,7 @@ spathialWay <- function(X, X_labels, boundary_ids, NC, neighbors = NULL){
   if(neighbors == 1){
     ppath <- compute_spathial(X, boundary_ids, NC)
     colnames(ppath) <- colnames(X)
-    perturbed_path <- NULL
+    perturbed_paths <- NULL
   }
   else{
     starting_class <- X_labels[which(rownames(X) == boundary_ids[1])]
@@ -147,7 +147,7 @@ spathialWay <- function(X, X_labels, boundary_ids, NC, neighbors = NULL){
     starting_class_neighbour <- find_nearest_points(X[which(rownames(X) == boundary_ids[1]),], element_starting_class, neighbors)
     ending_class_neighbour <- find_nearest_points(X[which(rownames(X) == boundary_ids[2]),], element_ending_class, neighbors)
 
-    perturbed_path <- lapply(starting_class_neighbour, function(x){
+    perturbed_paths <- lapply(starting_class_neighbour, function(x){
       lapply(ending_class_neighbour, function(y){
         boundary_ids <- c(x, y)
         perturbed <- compute_spathial(X, boundary_ids, NC)
@@ -155,13 +155,13 @@ spathialWay <- function(X, X_labels, boundary_ids, NC, neighbors = NULL){
         return(perturbed)
       })
     })
-    ppath <- perturbed_path[[1]][[1]]
+    ppath <- perturbed_paths[[1]][[1]]
     colnames(ppath) <- colnames(X)
   }
 
   outlist<-list(
     ppath=ppath,
-    perturbed_path=perturbed_path
+    perturbed_paths=perturbed_paths
   )
   return(outlist)
 }
@@ -205,41 +205,52 @@ spathialLabels <- function(X, X_labels, spathial_res){
 #' @param X_garbage the data points removed during the filtering (if the prefiltering is done)
 #' @param X_labels_garbage the labels of the data points removed during the filtering (if the prefiltering is done)
 #' @export
-spathialPlot2D <- function(X, X_labels, boundary_ids, spathial_res, perplexity_value=NULL, X_garbage=NULL, X_labels_garbage=NULL){
+spathialPlot2D <- function(X, X_labels, boundary_ids, spathial_res, perplexity_value=NULL, mask=NULL){
   set.seed(1)
-
   # Exception handler if the user doesn't specificy perplexity
-  if(is.null(perplexity_value)){
-    perplexity_value<-ceiling(nrow(X)*3/50)
-    #message("Perplexity is ",perplexity_value)
-  }
-  ppath <- spathial_res$ppath
-  ppath <- ppath[2:(nrow(ppath)-1),]
-  rownames(ppath) <- paste("ppath",1:nrow(ppath))
-  ppath_labels <- array(data = -1, dim=(nrow(ppath)))
-  total_labels <- c(X_labels, ppath_labels)
-  all_points <- rbind(X, ppath)
-  if(!is.null(X_garbage)){
-    total_labels <- c(total_labels, X_labels_garbage)
-    all_points <- rbind(all_points, X_garbage)
-  }
+  if(ncol(X) == 2){
+    ppath <- spathial_res$ppath
 
-  tsne_res <- Rtsne::Rtsne(as.matrix(all_points), dims = 2, perplexity = perplexity_value)
-  points_2D <- tsne_res$Y
+    plot(X[,1],X[,2], col=X_labels, pch=X_labels)
+    points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="green",cex=4)
+    lines(ppath[,1], ppath[,2],lwd=3,col="red",type="o",pch=15)
+    if(!is.null(mask)){
+      X_garbage <- X[!mask,]
+      points(X_garbage[,1],X_garbage[,2], col="blue", pch=4)
+    }
+  }else{
+    if(is.null(perplexity_value)){
+      perplexity_value<-ceiling(nrow(X)*3/50)
+      #message("Perplexity is ",perplexity_value)
+    }
+    ppath <- spathial_res$ppath
+    ppath <- ppath[2:(nrow(ppath)-1),]
+    rownames(ppath) <- paste("ppath",1:nrow(ppath))
+    ppath_labels <- array(data = -1, dim=(nrow(ppath)))
+    total_labels <- c(X_labels, ppath_labels)
+    all_points <- rbind(X, ppath)
 
-  X_2D <- points_2D[which(total_labels != -1 & total_labels != 0 & total_labels != -2),]
-  boundary_ids_2D <- points_2D[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
-  ppath_2D <- points_2D[which(total_labels == -1),]
-  ppath_2D <- rbind(boundary_ids_2D[1,], ppath_2D, boundary_ids_2D[2,])
-  if(!is.null(X_garbage)){
-    X_garbage_2D <- points_2D[which(total_labels == -2),]
-  }
+    tsne_res <- Rtsne::Rtsne(as.matrix(all_points), dims = 2, perplexity = perplexity_value)
+    points_2D <- tsne_res$Y
 
-  plot(X_2D[,1],X_2D[,2], col=X_labels, pch=19)
-  points(boundary_ids_2D[,1],boundary_ids_2D[,2], col="black", pch=3)
-  lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch=15)
-  if(!is.null(X_garbage)){
-    points(X_garbage_2D[,1],X_garbage_2D[,2], col="gray", pch=3)
+    boundary_ids_2D <- points_2D[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
+    ppath_2D <- points_2D[which(total_labels == -1),]
+    ppath_2D <- rbind(boundary_ids_2D[1,], ppath_2D, boundary_ids_2D[2,])
+
+    points_2D <- points_2D[which(total_labels != -1),]
+
+    if(!is.null(mask)){
+      X_2D <- points_2D[mask,]
+      X_garbage_2D <- points_2D[!mask, ]
+      X_labels <- X_labels[mask]
+    }
+
+    plot(points_2D[,1],points_2D[,2], col=X_labels, pch=19)
+    points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="green",cex=4)
+    lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch=15)
+    if(!is.null(mask)){
+      points(X_garbage_2D[,1],X_garbage_2D[,2], col="gray", pch=4)
+    }
   }
 }
 
@@ -260,8 +271,8 @@ spathialPlot2D <- function(X, X_labels, boundary_ids, spathial_res, perplexity_v
 #' @export
 spathialCorrelation <- function(spathial_res){
   #Mean of z scores (with Fisher transformation)
-  if(!is.null(spathial_res$perturbed_path)){
-    z_scores_perturbed_path <- lapply(spathial_res$perturbed_path, function(x){
+  if(!is.null(spathial_res$perturbed_paths)){
+    z_scores_perturbed_paths <- lapply(spathial_res$perturbed_paths, function(x){
       lapply(x, function(y){
         z_scores <- apply(y, 2, function(z){
           DescTools::FisherZ(cor(z, c(1:length(z))))

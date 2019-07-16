@@ -6,30 +6,27 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-##Quick start
-The spathial package contains function to create a path able to navigate a n-dimensional space. __ADD__ 
+The spathial package contains function to create a path able to navigate a n-dimensional space. __ADD__
 
-The sections below show the most basic steps which allows to compute the principal path. 
+#Quick start
+In this section we show the most basic steps which allows to compute the principal path. We begin with a simple example in 2-dimensions just to become familiar with the functions inside Spathial. 
 
-Intall spathial using
+Let's start installing spathial to ensure that all the needed spackages are installed.
 
 ```r
 install.packages("spathial")
 ```
 
-to ensure that all the needed spackages are installed.
-
-
 ##Step 1: load data
-To compute the principal path we assume that you have an input matrix ```X```. Each column of the matrix ```X``` is a feature and each row has a univocal name. We also assume that you have an input vector ```X_labels``` which contains for each row of ```X``` the corresponding label. For the sake of simplicity, we create a simple .csv file with 500 samples. The following code chunck shows how to load the .csv and how to format the data.
+To compute the principal path we assume that you have an input matrix ```X```. Each column of the matrix ```X``` is a feature and each row has a univocal name. We also assume that you have an input vector ```X_labels``` which contains for each row of ```X``` the corresponding label. For the sake of simplicity, we create a simple .csv file with 900 samples and 3 columns (2 + labels). The following code chunck shows how to load the .csv and how to format the data.
 
 ```r
 #load the dataset
-myfile<-system.file("extdata", "example.csv", package = "spathial")
+myfile<-system.file("extdata", "2D_constellation.csv", package = "spathial")
 data<-read.csv(myfile,as.is=TRUE,header=TRUE)
 
 #matrix X with 4 columns (4 dimensions) and univocal rownames
-X <- data[,2:(dim(data)[2]-1)]
+X <- data[,2:(ncol(data)-1)]
 rownames(X)<-paste0("sam",rownames(X))
 
 #vector X_labels
@@ -40,33 +37,27 @@ Computing the function ```head``` given ```X``` and ```X_labels``` as input you 
 
 ```r
 > head(X)
-             X1         X2          X3         X4
-sam1  0.6919111  1.0563105  0.80650023 -1.4920288
-sam2  0.5680345  0.3875362  1.21112690 -0.6233043
-sam3  0.6919111  0.8087083  0.80650023 -0.1369691
-sam4  0.9868512 -1.0261369 -0.61835450 -0.3045696
-sam5 -0.1521175  0.3175302  1.24326861 -1.3593687
-sam6  0.3749487 -1.0261369 -0.02172219 -0.3905871
+            V1        V2
+sam1  0.440620 -0.206480
+sam2 -0.305250  0.122770
+sam3 -0.234850  0.097566
+sam4  0.205200 -0.058423
+sam5  0.022774  0.134450
+sam6 -0.223260  0.092053
 
 > head(X_labels)
-[1] 1 1 1 2 1 2
+[1] 8 3 8 8 8 8
 ```
 
 To following code chunk shows how to plot the datapoints colored according to ```X_labels```:
 
 ```r
 #Plot the results
-set.seed(1)
-tsne_res <- Rtsne::Rtsne(as.matrix(X), dims = 2, perplexity = 30)
-points_2D <- tsne_res$Y
-boundary_ids_2D <- points_2D[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
-
-plot(points_2D[,1],points_2D[,2], col=X_labels, pch=19)
-points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="green",cex=4)
+plot(X[,1],X[,2], col=X_labels, pch=X_labels)
 ```
 
 The following picture shows the graphical representation of the datapoints:
-![prefiltering example](figures/datapoints.png)
+![prefiltering example](figures/constellation/datapoints.png)
 
 ##Step 2: select the boundaries
 The fist step to compute the principal path consists in selecting the starting and the ending points. The package spathial gives you the function ```spathialBoundaryIds``` which takes as input the matrix ```X```, the corresponding labels ```X_labels``` and the parameters ```mode```, ```from``` and ```to```.
@@ -89,17 +80,17 @@ The following code chuncks show how to use the function ```spathialBoundaryIds``
 
 ```r
 #mode=1
-boundary_init <- spathialBoundaryIds(X, X_labels, mode=1)
+boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=1)
 ```
 
 ```r
 #mode=2
-boundary_init <- spathialBoundaryIds(X, X_labels, mode=2, from=1, to=2)
+boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
 ```
 
 ```r
 #mode=3
-boundary_init <- spathialBoundaryIds(X, X_labels, mode=3, from="sam4", to="sam497")
+boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=3, from="sam123", to="sam456")
 ```
 
 ```r
@@ -111,17 +102,13 @@ X_labels <- boundary_init$X_labels
 
 ```r
 #Plot the results
-set.seed(1)
-tsne_res <- Rtsne::Rtsne(as.matrix(X), dims = 2, perplexity = 30)
-points_2D <- tsne_res$Y
-boundary_ids_2D <- points_2D[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
-
-plot(points_2D[,1],points_2D[,2], col=X_labels, pch=19)
-points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="green",cex=4)
+boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
+plot(X[,1],X[,2], col=X_labels, pch=X_labels)
+points(boundaries[,1],boundaries[,2], pch="x",col="red",cex=4)
 ```
 
-The following picture shows the boundaries when ```mode=2```, ```from=1``` and ```to=2```:
-![prefiltering example](figures/boundaries.png)
+The following picture shows the boundaries when ```mode=2```, ```from=3``` and ```to=6```:
+![prefiltering example](figures/constellation/boundaries.png)
 
 ##Step 3: prefiltering (optional)
 The principal path is an algorithm intrinsically global. If you are searching for a path which does not involve the whole dataset, you can perform the function ```spathialPrefiltering```  before the principal path algorithm is applied, otherwise this filtering procedure is not due.
@@ -137,30 +124,55 @@ The following code chunck shows how to use the function ```spathialPrefiltering`
 
 ```r
 # Prefilter data
-filter_res <- spathialPrefiltering(X, X_labels, boundary_ids)
+filter_res <- spathial::spathialPrefiltering(X, X_labels, boundary_ids)
 
 mask <- filter_res$mask
 boundary_ids <- filter_res$boundary_ids
 
 #Plot the results
-set.seed(1)
-tsne_res <- Rtsne::Rtsne(as.matrix(X), dims = 2, perplexity = 30)
-points_2D <- tsne_res$Y
+boundary_ids_2D <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
+X_garbage_2D <- X[!mask,]
 
-boundary_ids_2D <- points_2D[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
-X_garbage_2D <- points_2D[!mask,]
-
-plot(points_2D[,1],points_2D[,2], col=X_labels, pch=19)
-points(boundary_ids_2D[,1],boundary_ids_2D[,2], col="green", pch=20, cex=2)
-points(X_garbage_2D[,1],X_garbage_2D[,2], col="gray", pch=4)
+plot(X[,1],X[,2], col=X_labels, pch=X_labels)
+points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="red",cex=4)
+points(X_garbage_2D[,1],X_garbage_2D[,2], col="blue", pch=4)
 ```
 
 The following picture shows the result of the plot:
-![prefiltering example](figures/prefiltering.png)
+![prefiltering example](figures/constellation/prefiltering.png)
 
 ##Step 4: principal path
+The function ```spathialWay``` computes the principal path algorithm and gives as output the principal path points. It takes as input the matrix ```X```, the labels ```X_labels```, the boundaries ```boundary_ids``` and the parameters ```NC``` and ```neighbors```. 
+```NC``` is the desired number of waypoints of the resulting principal path. For example, given ```NC=10``` the resulting principal path will be composed of 10 waypoints plus the starting and the ending points. 
 
-##Step 5: unserstanding the results
+For the sake of simplicity, in this section we discuss only the simple version with ```neighbors=1```, which is the default value. We discuss more complex examples in the next section.
+
+The output of the function ```spathialWay``` is a list with the following content:
+
+* __ppath__: the waypoints of the principal path;   
+* __perturbed_paths__: the waypoints of all the perturbed paths.
+
+With ```neighbors=1``` the value of the output ```perturbed_path``` will be always equal to ```NULL```.
+
+The following code chuncks show how to use the function ```spathialWay```, with or without prefiltering, and how to extract the output:
+
+```r
+# Compute principal path without prefiltering
+NC <- 50
+spathial_res <- spathial::spathialWay(X, X_labels, boundary_ids, NC, neighbors = 1)
+```
+
+```r
+# Compute principal path after prefiltering
+X_filtered <- X[mask,]
+X_labels_filtered <- X_labels[mask]
+NC <- 50
+spathial_res <- spathial::spathialWay(X_filtered, X_labels_filtered, boundary_ids, NC, neighbors = 1)
+```
+
+The next subsection shows hot to use the result ```spathial_res```.
+
+##Step 5: understanding the results
 
 ###Compute lables with Knn
 
