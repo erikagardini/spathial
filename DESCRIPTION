@@ -18,5 +18,3 @@ Imports:
     matrixStats,
     MASS,
     Rtsne
-Suggests:
-    reticulate

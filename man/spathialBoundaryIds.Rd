@@ -4,7 +4,7 @@
 \alias{spathialBoundaryIds}
 \title{Select starting and ending points}
 \usage{
-spathialBoundaryIds(X, X_labels, mode, from = NULL, to = NULL)
+spathialBoundaryIds(X, X_labels, mode = 2, from = NULL, to = NULL)
 }
 \arguments{
 \item{X}{data points}

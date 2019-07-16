@@ -19,16 +19,21 @@
 #'   \item X_labels: the new labels of the data matrix with the boundary labels
 #' }
 #' @export
-spathialBoundaryIds <- function(X, X_labels, mode, from = NULL, to = NULL){
-  if(mode == 2){
-    X_2D <- spathial_2D(X)
-    plot(X_2D$Y[,1],X_2D$Y[,2], pch=20,col="black",main="Click to select path start and end points")
-    boundary_ids<-rownames(X)[identify(X,n=2,plot=FALSE)]
+spathialBoundaryIds <- function(X, X_labels, mode = 2, from = NULL, to = NULL){
+  if(mode == 1){
+    tsne_res <- Rtsne::Rtsne(X, dims = 2, perplexity = 30)
+    X_2D <- tsne_res$Y
+    plot(X_2D[,1],X_2D[,2], col=X_labels, pch=19, main="Click to select path start and end points")
+    boundary_ids<-rownames(X)[identify(X_2D,n=2,plot=FALSE)]
     points(
-      X_2D$Y[boundary_ids,1], X_2D$Y[boundary_ids,2],pch="x",col="red",cex=4,
+      X_2D[which(rownames(X) == boundary_ids[1]),1], X_2D[which(rownames(X) == boundary_ids[1]),2],pch="x",col="green",cex=4,
       xlab="Dimension 1",ylab="Dimension 2"
     )
-  }else if(mode == 1){
+    points(
+      X_2D[which(rownames(X) == boundary_ids[2]),1], X_2D[which(rownames(X) == boundary_ids[2]),2],pch="x",col="green",cex=4,
+      xlab="Dimension 1",ylab="Dimension 2"
+    )
+  }else if(mode == 2){
     if(is.null(from) | is.null(to)){
       stop("You should insert the starting label and the ending label")
     }else if(!(from %in% X_labels)){
@@ -87,22 +92,23 @@ spathialBoundaryIds <- function(X, X_labels, mode, from = NULL, to = NULL){
 #' @export
 spathialPrefiltering <- function(X, X_labels, boundary_ids){
   prefiltered<-rkm_prefilter(X, boundary_ids)
-  X_filtered<-X[prefiltered$filter_mask,]
-  X_labels_filtered <- X_labels[prefiltered$filter_mask]
-  X_garbage<-X[!prefiltered$filter_mask,]
-  X_labels_garbage<-X_labels[!prefiltered$filter_mask]
-  X_labels_garbage <- sapply(X_labels_garbage, function(x){
-    return(-2)
-  })
-  boundary_ids<-prefiltered$boundary_ids_filtered
-  rm(prefiltered)
+  # X_filtered<-X[prefiltered$filter_mask,]
+  # X_labels_filtered <- X_labels[prefiltered$filter_mask]
+  # X_garbage<-X[!prefiltered$filter_mask,]
+  # X_labels_garbage<-X_labels[!prefiltered$filter_mask]
+  # X_labels_garbage <- sapply(X_labels_garbage, function(x){
+  #   return(-2)
+  # })
+  #boundary_ids<-prefiltered$boundary_ids_filtered
+  #rm(prefiltered)
 
   outlist<-list(
-    X_filtered=X_filtered,
-    X_labels_filtered=X_labels_filtered,
-    X_garbage=X_garbage,
-    X_labels_garbage=X_labels_garbage,
-    boundary_ids=boundary_ids
+    mask=prefiltered$filter_mask,
+    # X_filtered=X_filtered,
+    # X_labels_filtered=X_labels_filtered,
+    # X_garbage=X_garbage,
+    # X_labels_garbage=X_labels_garbage,
+    boundary_ids=prefiltered$boundary_ids_filtered
   )
   return(outlist)
 }
@@ -307,3 +313,4 @@ spathialCorrelation <- function(spathial_res){
   )
   return(outlist)
 }
+

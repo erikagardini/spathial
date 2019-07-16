@@ -1,66 +1,23 @@
 #Get the coordinates of the waypoints of the principal path
 compute_spathial <- function(X, boundary_ids, NC){
   ### Initialize waypoints
-  python_version <- system("python3 --version", intern=TRUE)
-  pip_version <- system("python3 -m pip --version", intern=TRUE)
-  if(grepl("Python 3.", python_version)){
-    message(Sys.time())
-    python_path <- Sys.which("python3")
-    command <- paste(python_path, "-m easy_install --upgrade --user pip")
-    system(command)
-    command <- paste(python_path, "-m pip install --upgrade --user virtualenv")
-    system(command)
-    reticulate::virtualenv_create("r-reticulate")
-    reticulate::virtualenv_install("r-reticulate", "scipy")
-    reticulate::use_virtualenv("r-reticulate", required = TRUE)
-    reticulate::source_python('pythonUtilities.py')
-    mtx_X <- as.matrix(X)
-    index_1 <- which(rownames(X) == boundary_ids[1])
-    index_1 <- index_1 - 1
-    index_2 <- which(rownames(X) == boundary_ids[2])
-    index_2 <- index_2 - 1
-    index <- c(index_1, index_2)
-    waypoint_ids<-initMedoidsPY(mtx_X, NC, 'kpp', index)
-    waypoint_ids<-c(index[1],waypoint_ids,index[2])
-    init_W<-X[waypoint_ids,]
+  waypoint_ids<-initMedoids(X, NC, 'kpp', boundary_ids)
+  waypoint_ids<-c(boundary_ids[1],waypoint_ids,boundary_ids[2])
+  init_W<-X[waypoint_ids,]
 
-    ### Annealing with rkm
-    s_span<-pracma::logspace(5,-5)
-    s_span<-c(s_span,0)
+  ### Annealing with rkm
+  s_span<-pracma::logspace(5,-5)
+  s_span<-c(s_span,0)
 
-    models<-list()
-
-    mtx_init_W <- as.matrix(init_W)
-
-    pb <- txtProgressBar(min = 0, max = length(s_span), style = 3)
-    for(i in 1:length(s_span)){
-      s<-s_span[i]
-      W<-rkmPY(mtx_X,mtx_init_W,s)
-      init_W<-W
-      models[[as.character(s)]]<-W
-      setTxtProgressBar(pb, i)
-    }
-    reticulate::virtualenv_remove("r-reticulate")
-    message(Sys.time())
-  }else{
-    waypoint_ids<-initMedoids(X, NC, 'kpp', boundary_ids)
-    waypoint_ids<-c(boundary_ids[1],waypoint_ids,boundary_ids[2])
-    init_W<-X[waypoint_ids,]
-
-    ### Annealing with rkm
-    s_span<-pracma::logspace(5,-5)
-    s_span<-c(s_span,0)
-
-    models<-list()
-     pb <- txtProgressBar(min = 0, max = length(s_span), style = 3)
-     for(i in 1:length(s_span)){
-       s<-s_span[i]
-       W<-rkm(X,init_W,s,plot_ax=FALSE)
-       init_W<-W
-       models[[as.character(s)]]<-W
-       setTxtProgressBar(pb, i)
-     }
-  }
+  models<-list()
+   pb <- txtProgressBar(min = 0, max = length(s_span), style = 3)
+   for(i in 1:length(s_span)){
+     s<-s_span[i]
+     W<-rkm(X,init_W,s,plot_ax=FALSE)
+     init_W<-W
+     models[[as.character(s)]]<-W
+     setTxtProgressBar(pb, i)
+   }
   close(pb)
 
   W_dst_var <- rkm_MS_pathvar(models, s_span, X)
