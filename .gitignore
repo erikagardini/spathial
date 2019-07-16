@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+Rplots.pdf
+.DS_Store
+.Rbuildignore

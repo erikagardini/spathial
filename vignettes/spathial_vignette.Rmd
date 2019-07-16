@@ -8,7 +8,7 @@ vignette: >
 ---
 The spathial package contains function to create a path able to navigate a n-dimensional space. __ADD__
 
-#Quick start
+# Quick start
 In this section we show the most basic steps which allows to compute the principal path. We begin with a simple example in 2-dimensions just to become familiar with the functions inside Spathial. 
 
 Let's start installing spathial to ensure that all the needed spackages are installed.
@@ -17,7 +17,7 @@ Let's start installing spathial to ensure that all the needed spackages are inst
 install.packages("spathial")
 ```
 
-##Step 1: load data
+## Step 1: load data
 To compute the principal path we assume that you have an input matrix ```X```. Each column of the matrix ```X``` is a feature and each row has a univocal name. We also assume that you have an input vector ```X_labels``` which contains for each row of ```X``` the corresponding label. For the sake of simplicity, we create a simple .csv file with 900 samples and 3 columns (2 + labels). The following code chunck shows how to load the .csv and how to format the data.
 
 ```r
@@ -59,7 +59,7 @@ plot(X[,1],X[,2], col=X_labels, pch=X_labels)
 The following picture shows the graphical representation of the datapoints:
 ![prefiltering example](figures/constellation/datapoints.png)
 
-##Step 2: select the boundaries
+## Step 2: select the boundaries
 The fist step to compute the principal path consists in selecting the starting and the ending points. The package spathial gives you the function ```spathialBoundaryIds``` which takes as input the matrix ```X```, the corresponding labels ```X_labels``` and the parameters ```mode```, ```from``` and ```to```.
 
 The parameter ```mode``` has to assume one the following values:
@@ -110,7 +110,7 @@ points(boundaries[,1],boundaries[,2], pch="x",col="red",cex=4)
 The following picture shows the boundaries when ```mode=2```, ```from=3``` and ```to=6```:
 ![prefiltering example](figures/constellation/boundaries.png)
 
-##Step 3: prefiltering (optional)
+## Step 3: prefiltering (optional)
 The principal path is an algorithm intrinsically global. If you are searching for a path which does not involve the whole dataset, you can perform the function ```spathialPrefiltering```  before the principal path algorithm is applied, otherwise this filtering procedure is not due.
 
 The function ```spathialPrefiltering``` takes as input the matrix ```X```, the corresponding labels ```X_labels``` and the boundaries ```boundary_ids``` which are the result of the function ```spathialBoundaryIds```.
@@ -141,7 +141,7 @@ points(X_garbage_2D[,1],X_garbage_2D[,2], col="blue", pch=4)
 The following picture shows the result of the plot:
 ![prefiltering example](figures/constellation/prefiltering.png)
 
-##Step 4: principal path
+## Step 4: principal path
 The function ```spathialWay``` computes the principal path algorithm and gives as output the principal path points. It takes as input the matrix ```X```, the labels ```X_labels```, the boundaries ```boundary_ids``` and the parameters ```NC``` and ```neighbors```. 
 ```NC``` is the desired number of waypoints of the resulting principal path. For example, given ```NC=10``` the resulting principal path will be composed of 10 waypoints plus the starting and the ending points. 
 
@@ -172,12 +172,12 @@ spathial_res <- spathial::spathialWay(X_filtered, X_labels_filtered, boundary_id
 
 The next subsection shows hot to use the result ```spathial_res```.
 
-##Step 5: understanding the results
+## Step 5: understanding the results
 
-###Compute lables with Knn
+### Compute lables with Knn
 
-###Plot 2D data with t-SNE
+### Plot 2D data with t-SNE
 
-###Compute the correlation
+### Compute the correlation
 
 
