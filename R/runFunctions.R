@@ -185,7 +185,6 @@ spathialLabels <- function(X, X_labels, spathial_res){
   X <- X[which(! grepl("Centroid", rownames(X))),]
   ppath_no_centroids <- ppath[2:(nrow(ppath)-1), ]
   lbl <- class::knn(X, ppath_no_centroids, cl=X_labels, k=1)
-  plot(c(1:length(lbl)), c(lbl), col=lbl, pch=19)
   return(lbl)
 }
 
@@ -205,18 +204,22 @@ spathialLabels <- function(X, X_labels, spathial_res){
 #' @param X_garbage the data points removed during the filtering (if the prefiltering is done)
 #' @param X_labels_garbage the labels of the data points removed during the filtering (if the prefiltering is done)
 #' @export
-spathialPlot2D <- function(X, X_labels, boundary_ids, spathial_res, perplexity_value=NULL, mask=NULL){
+spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_value=NULL, mask=NULL){
   set.seed(1)
-  # Exception handler if the user doesn't specificy perplexity
   if(ncol(X) == 2){
     ppath <- spathial_res$ppath
 
-    plot(X[,1],X[,2], col=X_labels, pch=X_labels)
-    points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="green",cex=4)
+    colors <- rainbow(length(table(X_labels)))
+    colors_labels <- sapply(X_labels, function(x){colors[x]})
+    boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
+
+    plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels))
+    points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
     lines(ppath[,1], ppath[,2],lwd=3,col="red",type="o",pch=15)
     if(!is.null(mask)){
       X_garbage <- X[!mask,]
-      points(X_garbage[,1],X_garbage[,2], col="blue", pch=4)
+      X_labels_garbage <- X_labels[!mask]
+      points(X_garbage[,1],X_garbage[,2], col="gray", pch="x")
     }
   }else{
     if(is.null(perplexity_value)){
@@ -245,7 +248,10 @@ spathialPlot2D <- function(X, X_labels, boundary_ids, spathial_res, perplexity_v
       X_labels <- X_labels[mask]
     }
 
-    plot(points_2D[,1],points_2D[,2], col=X_labels, pch=19)
+    colors <- rainbow(length(table(X_labels)))
+    colors_labels <- sapply(X_labels, function(x){colors[x]})
+
+    plot(points_2D[,1],points_2D[,2], col=colors_labels, pch=19)
     points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="green",cex=4)
     lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch=15)
     if(!is.null(mask)){
@@ -269,7 +275,7 @@ spathialPlot2D <- function(X, X_labels, boundary_ids, spathial_res, perplexity_v
 #'   \item ppath_parturbed: all the spathial waypoints for each perturbation
 #'}
 #' @export
-spathialCorrelation <- function(spathial_res){
+spathialStatistics <- function(spathial_res){
   #Mean of z scores (with Fisher transformation)
   if(!is.null(spathial_res$perturbed_paths)){
     z_scores_perturbed_paths <- lapply(spathial_res$perturbed_paths, function(x){
@@ -300,15 +306,32 @@ spathialCorrelation <- function(spathial_res){
     names(fisher) <- colnames(spathial_res$ppath)
 
     #Simple mean of correlation
-    # correlations <- lapply(spathial_res$perturbed_path, function(x){
-    #   lapply(x, function(y){
-    #     corr <- apply(y, 2, function(z){
-    #       cor(z, c(1:length(z)))
-    #     })
-    #   })
-    # })
-    # correlations <- colMeans(correlations)
-    correlations <- NULL
+    correlations <- lapply(spathial_res$perturbed_path, function(x){
+      lapply(x, function(y){
+        corr <- apply(y, 2, function(z){
+          cor(z, c(1:length(z)))
+        })
+      })
+    })
+
+    count <- 0
+    sum <- array(data=0, dim=c(ncol(spathial_res$ppath)))
+    for(i in (1:length(correlations))){
+      A <- correlations[[i]]
+      for(j in (1:length(A))){
+        B <- A[[j]]
+        for(k in (1:length(B))){
+          sum[k] <- sum[k] +  B[k]
+        }
+        count <- count + 1
+      }
+    }
+
+    correlations <- sapply(sum, function(x){
+      corr_avg <- x/count
+    })
+    correlations <- as.list(correlations)
+    names(correlations) <- colnames(spathial_res$ppath)
 
   }else{
     correlations <- lapply(spathial_res$ppath, function(x){

@@ -53,7 +53,9 @@ To following code chunk shows how to plot the datapoints colored according to ``
 
 ```r
 #Plot the results
-plot(X[,1],X[,2], col=X_labels, pch=X_labels)
+colors <- rainbow(length(table(X_labels)))
+colors_labels <- sapply(X_labels, function(x){colors[x]})
+plot(X[,1],X[,2], col=colors_labels,pch=as.character(X_labels))
 ```
 
 The following picture shows the graphical representation of the datapoints:
@@ -74,7 +76,7 @@ The output of the function ```spathialBoundaryIds``` is a list with the followin
 * __X_labels__: the initial vector ```X_labels``` inclusive of the labels of the starting and the ending points; 
 * __boundary_ids__: the rowname of the starting and the ending points.
 
-__Attention!!__ The matrix ```X``` and the vector ```X_labels``` change only when ```mode=2``` (the resulting matrix and vector have two additional elements, corresponding to the centroids).
+__N.B.__ The matrix ```X``` and the vector ```X_labels``` change only when ```mode=2``` (the resulting matrix and vector have two additional elements, corresponding to the centroids).
 
 The following code chuncks show how to use the function ```spathialBoundaryIds```, with different values of the parameter ```mode```, and how to extract the output:
 
@@ -103,8 +105,8 @@ X_labels <- boundary_init$X_labels
 ```r
 #Plot the results
 boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
-plot(X[,1],X[,2], col=X_labels, pch=X_labels)
-points(boundaries[,1],boundaries[,2], pch="x",col="red",cex=4)
+plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels))
+points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
 ```
 
 The following picture shows the boundaries when ```mode=2```, ```from=3``` and ```to=6```:
@@ -125,17 +127,16 @@ The following code chunck shows how to use the function ```spathialPrefiltering`
 ```r
 # Prefilter data
 filter_res <- spathial::spathialPrefiltering(X, X_labels, boundary_ids)
-
 mask <- filter_res$mask
 boundary_ids <- filter_res$boundary_ids
 
 #Plot the results
-boundary_ids_2D <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
-X_garbage_2D <- X[!mask,]
+boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
+X_garbage <- X[!mask,]
 
-plot(X[,1],X[,2], col=X_labels, pch=X_labels)
-points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="red",cex=4)
-points(X_garbage_2D[,1],X_garbage_2D[,2], col="blue", pch=4)
+plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels))
+points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
+points(X_garbage[,1],X_garbage[,2], col="gray", pch=4)
 ```
 
 The following picture shows the result of the plot:
@@ -173,11 +174,105 @@ spathial_res <- spathial::spathialWay(X_filtered, X_labels_filtered, boundary_id
 The next subsection shows hot to use the result ```spathial_res```.
 
 ## Step 5: understanding the results
+The package Spathial includes three different functions to understand the output of the principal path algorithm: ```spathialPlot```, ```spathialLables``` and ```spathialStatistics```. The following subsections describe what they do and how to use each of them.
+
+### Plot principal path
+The function ```spathialPlot``` plots the principal path together with all the data points (filtered and not) and the boundaries. The function takes as input the matrix ```X``` (the initial version), the vector ```X_labels```, the boundaries ```boundary_ids```, the output of the principal path algorithm ```spathial_res```, the parameter ```perplexity value``` (default 30) and the parameter ```mask``` which is one of the result of the prefiltering and it is ```NULL``` when the prefiltering is not computed.
+When the input matrix ```X``` has more than 2 columns, the function reduce the dimension of the space from N (>2) to 2 using the t-SNE algorithm.
+
+The following code chuncks show hot to use the function ```spathialPlot``` with the principal path generated during the previous step (with and without prefiltering):
+
+```r
+#Plot principal path with prefiltering - mask not NULL
+spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value=30, mask)
+
+#Plot principal path without prefiltering - mask NULL
+spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value=30)
+```
+
+The following pictures show the output of the function ```spathialPlot``` for both the examples:
+
+![prefiltering example](figures/constellation/pp_no_prefiltering.png)
+![prefiltering example](figures/constellation/pp_prefiltering.png)
 
 ### Compute lables with Knn
+The function ```spathialLables``` assignes to each waypoints of the principal path a lables considering the labels of the nearest point in the data space. This type of analysis can be useful when you want to verify if the path moves respecting a specific evolution. The function takes as input the matrix ```X``` (which is composed only by the preserved samples if you compute the prefiltering), the vector ```X_labels``` and the output of the principal path algorithm ```spathial_res```. The output are the labels for each waypoints of the principal path.
 
-### Plot 2D data with t-SNE
+The following code chuncks show how to use the function ```spathialLabels``` and how to plot the result:
 
-### Compute the correlation
+```r
+#Matrix X not filtered
+ppath_labels <- spathialLabels(X, X_labels, spathial_res)
+#Plot the results
+ppath_labels <- as.vector(ppath_labels)
+colors_labels_ppath <- sapply(ppath_labels, function(y){colors[as.integer(y)]})
+plot(c(1:length(ppath_labels)), c(ppath_labels), col=colors_labels_ppath, pch=as.character(ppath_labels))
+```
+
+```r
+#Matrix X filtered
+#Labels for each waypoint with knn
+ppath_labels <- spathialLabels(X_filtered, X_labels_filtered, spathial_res)
+
+#Plot the results
+ppath_labels<- as.vector(ppath_labels)
+colors_labels_ppath <- sapply(ppath_labels, function(y){colors[as.integer(y)]})
+plot(c(1:length(ppath_labels)), c(ppath_labels), col=colors_labels_ppath, pch=as.character(ppath_labels))
+```
+
+The following pictures show the labels for each waypoint for both the previous examples:
+![prefiltering example](figures/constellation/labels.png)
+
+![prefiltering example](figures/constellation/labels_no_prefiltering.png)
+
+### Compute the statistics
+The function ```spathialStatistics``` returns some statistics related to result of the principal path algorithm ```spathial_res```.
+In particular, here we want to focus on how much each feature (a coordinate of the N-dimensional space) is involved along the evolution of the principal path. 
+
+For this reason, the output of the function ```spathialStatistics``` is a list with the following content:
+
+* __correlations__;
+* __fisher_correlations__; gives for each f
+* __rank_scores__.
+
+Given the simplified scenario where the parameter ```neighbors``` of the function ```spathialWay``` is always equal to ```1```, the output of the function ```spathialStatistics``` is simplified as follow:
+
+* __correlations__: gives for each features the correlation value with the evolution of the principal path;
+* __fisher_correlations__: NULL;
+* __rank_scores__: NULL.
+
+The following code chuncks show how to use the function ```spathialStatistics``` and how to plot the results:
+
+```r
+#Statistics about each feature of the path
+statistics <- spathialStatistics(spathial_res)
+```
+
+```r
+#Plot the results
+corr_values <- as.numeric(unlist(statistics$correlations))
+correlation_matrix <- matrix(data=0, nrow = (length(corr_values)+1), ncol = (length(corr_values)+1))
+colnames(correlation_matrix) <- c(colnames(X), "pp")
+rownames(correlation_matrix) <- c(colnames(X), "pp")
+correlation_matrix[,ncol(correlation_matrix)] <- c(corr_values, 0)
+correlation_matrix[nrow(correlation_matrix),] <- c(corr_values, 0)
+
+library(corrplot)
+library(RColorBrewer)
+corrplot(correlation_matrix, type="upper", order="hclust",
+         col=brewer.pal(n=8, name="RdYlBu"))
+```
+
+The following pictures show how much each feature is correlated with the evolution of the principal path (for both the principath paths with and without prefiltering):
+![prefiltering example](figures/constellation/corr_matrix_no_prefiltering.png)
+![prefiltering example](figures/constellation/corr_matrix_prefiltering.png)
+
+__N.B.__: all the other blocks are intentionally blank, beacuse not interesting for our goal.
+
+
+
+
+
+
 
 
