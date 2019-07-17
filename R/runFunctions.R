@@ -251,11 +251,11 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
     colors <- rainbow(length(table(X_labels)))
     colors_labels <- sapply(X_labels, function(x){colors[x]})
 
-    plot(points_2D[,1],points_2D[,2], col=colors_labels, pch=19)
-    points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="green",cex=4)
+    plot(points_2D[,1],points_2D[,2], col=colors_labels, pch=as.character(X_labels))
+    points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="black",cex=4)
     lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch=15)
     if(!is.null(mask)){
-      points(X_garbage_2D[,1],X_garbage_2D[,2], col="gray", pch=4)
+      points(X_garbage_2D[,1],X_garbage_2D[,2], col="gray", pch="x")
     }
   }
 }
@@ -288,8 +288,8 @@ spathialStatistics <- function(spathial_res){
 
     count <- 0
     sum <- array(data=0, dim=c(ncol(spathial_res$ppath)))
-    for(i in (1:length(z_scores_perturbed_path))){
-      A <- z_scores_perturbed_path[[i]]
+    for(i in (1:length(z_scores_perturbed_paths))){
+      A <- z_scores_perturbed_paths[[i]]
       for(j in (1:length(A))){
         B <- A[[j]]
         for(k in (1:length(B))){
