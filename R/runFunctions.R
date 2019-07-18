@@ -139,9 +139,9 @@ spathialPrefiltering <- function(X, X_labels, boundary_ids){
 #' @export
 spathialWay <- function(X, X_labels, boundary_ids, NC=50, neighbors = NULL){
   if(is.null(neighbors)){
-    neighbors <- 1
+    neighbors <- 0
   }
-  if(neighbors == 1){
+  if(neighbors == 0){
     ppath <- compute_spathial(X, boundary_ids, NC)
     colnames(ppath) <- colnames(X)
     perturbed_paths <- NULL
@@ -153,8 +153,8 @@ spathialWay <- function(X, X_labels, boundary_ids, NC=50, neighbors = NULL){
     element_starting_class <- X[which(X_labels == starting_class),]
     element_ending_class <- X[which(X_labels == ending_class),]
 
-    starting_class_neighbour <- find_nearest_points(X[which(rownames(X) == boundary_ids[1]),], element_starting_class, neighbors)
-    ending_class_neighbour <- find_nearest_points(X[which(rownames(X) == boundary_ids[2]),], element_ending_class, neighbors)
+    starting_class_neighbour <- find_nearest_points(X[which(rownames(X) == boundary_ids[1]),], element_starting_class, neighbors+1)
+    ending_class_neighbour <- find_nearest_points(X[which(rownames(X) == boundary_ids[2]),], element_ending_class, neighbors+1)
 
     perturbed_paths <- lapply(starting_class_neighbour, function(x){
       lapply(ending_class_neighbour, function(y){

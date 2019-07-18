@@ -15,7 +15,7 @@ X_labels <- boundary_init$X_labels
 
 # Compute spathial
 NC <- 50
-spathial_res <- spathialWay(X, X_labels, boundary_ids, NC, neighbors = 3)
+spathial_res <- spathialWay(X, X_labels, boundary_ids, NC, neighbors = 2)
 
 #Plot the path in 2D using Rtsne
 spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value=30)
