@@ -17,4 +17,14 @@ Imports:
     igraph,
     matrixStats,
     MASS,
-    Rtsne
+    Rtsne,
+    DescTools,
+    class
+Suggests:
+    utils,
+    knitr,
+    rmarkdown
+VignetteBuilder: 
+    utils,
+    knitr,
+    rmarkdown

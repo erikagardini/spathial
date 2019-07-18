@@ -8,8 +8,8 @@ citEntry(entry="article",
 	title = "spathial: and R package for path progression in data space",
 	journal = "Bioinformatics",
 	year = 2019,
-	volume = xx,
-	number = x,
+	volume = 1,
+	number = 1,
 	pages = "123-124",
 
 	textVersion = "Gardini, E., Giorgi, F.M., Cavalli,A., and Decherchi, S. (2020) spathial: and R package for path progression in data space"

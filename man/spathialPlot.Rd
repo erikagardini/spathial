@@ -22,9 +22,7 @@ spathialPlot(X, X_labels, boundary_ids, spathial_res,
 
 \item{perplexity_value}{the value for TSNE perplexity (default is nrsamples*3/50)}
 
-\item{X_garbage}{the data points removed during the filtering (if the prefiltering is done)}
-
-\item{X_labels_garbage}{the labels of the data points removed during the filtering (if the prefiltering is done)}
+\item{mask}{the mask of the sample to preserve (when prefiltering is computed)}
 }
 \description{
 Get the 2D coordinates of each waypoint (using t-SNE algorithm for the dimensionality reduction)

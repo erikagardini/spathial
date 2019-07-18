@@ -21,28 +21,37 @@
 #' @export
 spathialBoundaryIds <- function(X, X_labels, mode = 2, from = NULL, to = NULL){
   if(mode == 1){
-    if(ncol(X) == 2){
-      plot(X[,1],X[,2], col=X_labels, pch=19, main="Click to select path start and end points")
+    if(ncol(X) < 2){
+      stop("X should have at least 2 columns")
+    }else if(ncol(X) == 2){
+      colors <- rainbow(length(table(X_labels)))
+      colors_labels <- sapply(X_labels, function(x){colors[x]})
+
+      plot(X[,1],X[,2], col=color_labels, pch=as.character(X_labels), main="Click to select path start and end points")
       boundary_ids<-rownames(X)[identify(X,n=2,plot=FALSE)]
       points(
-        X[which(rownames(X) == boundary_ids[1]),1], X[which(rownames(X) == boundary_ids[1]),2],pch="x",col="green",cex=4,
+        X[which(rownames(X) == boundary_ids[1]),1], X[which(rownames(X) == boundary_ids[1]),2],pch="x",col="black",cex=4,
         xlab="Dimension 1",ylab="Dimension 2"
       )
       points(
-        X[which(rownames(X) == boundary_ids[2]),1], X[which(rownames(X) == boundary_ids[2]),2],pch="x",col="green",cex=4,
+        X[which(rownames(X) == boundary_ids[2]),1], X[which(rownames(X) == boundary_ids[2]),2],pch="x",col="black",cex=4,
         xlab="Dimension 1",ylab="Dimension 2"
       )
     }else{
       tsne_res <- Rtsne::Rtsne(X, dims = 2, perplexity = 30)
       X_2D <- tsne_res$Y
-      plot(X_2D[,1],X_2D[,2], col=X_labels, pch=19, main="Click to select path start and end points")
+
+      colors <- rainbow(length(table(X_labels)))
+      colors_labels <- sapply(X_labels, function(x){colors[x]})
+
+      plot(X_2D[,1],X_2D[,2], col=colors_labels, pch=as.character(X_labels), main="Click to select path start and end points")
       boundary_ids<-rownames(X)[identify(X_2D,n=2,plot=FALSE)]
       points(
-        X_2D[which(rownames(X) == boundary_ids[1]),1], X_2D[which(rownames(X) == boundary_ids[1]),2],pch="x",col="green",cex=4,
+        X_2D[which(rownames(X) == boundary_ids[1]),1], X_2D[which(rownames(X) == boundary_ids[1]),2],pch="x",col="black",cex=4,
         xlab="Dimension 1",ylab="Dimension 2"
       )
       points(
-        X_2D[which(rownames(X) == boundary_ids[2]),1], X_2D[which(rownames(X) == boundary_ids[2]),2],pch="x",col="green",cex=4,
+        X_2D[which(rownames(X) == boundary_ids[2]),1], X_2D[which(rownames(X) == boundary_ids[2]),2],pch="x",col="black",cex=4,
         xlab="Dimension 1",ylab="Dimension 2"
       )
     }
@@ -128,7 +137,7 @@ spathialPrefiltering <- function(X, X_labels, boundary_ids){
 #'   \item ppath_parturbed: all the spathial waypoints for each perturbation
 #'}
 #' @export
-spathialWay <- function(X, X_labels, boundary_ids, NC, neighbors = NULL){
+spathialWay <- function(X, X_labels, boundary_ids, NC=50, neighbors = NULL){
   if(is.null(neighbors)){
     neighbors <- 1
   }
@@ -201,61 +210,144 @@ spathialLabels <- function(X, X_labels, spathial_res){
 #'   \item ppath_perturbed: all the perturbed paths
 #' }
 #' @param perplexity_value the value for TSNE perplexity (default is nrsamples*3/50)
-#' @param X_garbage the data points removed during the filtering (if the prefiltering is done)
-#' @param X_labels_garbage the labels of the data points removed during the filtering (if the prefiltering is done)
+#' @param mask the mask of the sample to preserve (when prefiltering is computed)
 #' @export
 spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_value=NULL, mask=NULL){
   set.seed(1)
-  if(ncol(X) == 2){
-    ppath <- spathial_res$ppath
 
-    colors <- rainbow(length(table(X_labels)))
-    colors_labels <- sapply(X_labels, function(x){colors[x]})
-    boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
+  if(is.null(spathial_res$perturbed_paths)){
+    if(ncol(X) == 2){
+      ppath <- spathial_res$ppath
 
-    plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels))
-    points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
-    lines(ppath[,1], ppath[,2],lwd=3,col="red",type="o",pch=15)
-    if(!is.null(mask)){
-      X_garbage <- X[!mask,]
-      X_labels_garbage <- X_labels[!mask]
-      points(X_garbage[,1],X_garbage[,2], col="gray", pch="x")
+      colors <- rainbow(length(table(X_labels)))
+      colors_labels <- sapply(X_labels, function(x){colors[x]})
+      boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
+
+      plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels))
+      points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
+      lines(ppath[,1], ppath[,2],lwd=3,col="red",type="o",pch=15)
+      if(!is.null(mask)){
+        X_garbage <- X[!mask,]
+        X_labels_garbage <- X_labels[!mask]
+        points(X_garbage[,1],X_garbage[,2], col="gray", pch="x")
+      }
+    }else{
+      if(is.null(perplexity_value)){
+        perplexity_value<-ceiling(nrow(X)*3/50)
+        #message("Perplexity is ",perplexity_value)
+      }
+      ppath <- spathial_res$ppath
+      ppath <- ppath[2:(nrow(ppath)-1),]
+      rownames(ppath) <- paste("ppath",1:nrow(ppath))
+      ppath_labels <- array(data = -1, dim=(nrow(ppath)))
+      total_labels <- c(X_labels, ppath_labels)
+      all_points <- rbind(X, ppath)
+
+      tsne_res <- Rtsne::Rtsne(as.matrix(all_points), dims = 2, perplexity = perplexity_value)
+      points_2D <- tsne_res$Y
+
+      boundary_ids_2D <- points_2D[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
+      ppath_2D <- points_2D[which(total_labels == -1),]
+      ppath_2D <- rbind(boundary_ids_2D[1,], ppath_2D, boundary_ids_2D[2,])
+
+      points_2D <- points_2D[which(total_labels != -1),]
+
+      if(!is.null(mask)){
+        X_2D <- points_2D[mask,]
+        X_garbage_2D <- points_2D[!mask, ]
+        X_labels <- X_labels[mask]
+      }
+
+      colors <- rainbow(length(table(X_labels)))
+      colors_labels <- sapply(X_labels, function(x){colors[x]})
+
+      plot(points_2D[,1],points_2D[,2], col=colors_labels, pch=as.character(X_labels))
+      points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="black",cex=4)
+      lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch=15)
+      if(!is.null(mask)){
+        points(X_garbage_2D[,1],X_garbage_2D[,2], col="gray", pch="x")
+      }
     }
-  }else{
-    if(is.null(perplexity_value)){
-      perplexity_value<-ceiling(nrow(X)*3/50)
-      #message("Perplexity is ",perplexity_value)
-    }
-    ppath <- spathial_res$ppath
-    ppath <- ppath[2:(nrow(ppath)-1),]
-    rownames(ppath) <- paste("ppath",1:nrow(ppath))
-    ppath_labels <- array(data = -1, dim=(nrow(ppath)))
-    total_labels <- c(X_labels, ppath_labels)
-    all_points <- rbind(X, ppath)
+  }
+  else{
+    if(ncol(X) == 2){
+      ppaths <- spathial_res$perturbed_paths
 
-    tsne_res <- Rtsne::Rtsne(as.matrix(all_points), dims = 2, perplexity = perplexity_value)
-    points_2D <- tsne_res$Y
+      colors <- rainbow(length(table(X_labels)))
+      colors_labels <- sapply(X_labels, function(x){colors[x]})
+      boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
 
-    boundary_ids_2D <- points_2D[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
-    ppath_2D <- points_2D[which(total_labels == -1),]
-    ppath_2D <- rbind(boundary_ids_2D[1,], ppath_2D, boundary_ids_2D[2,])
+      plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels))
+      points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
 
-    points_2D <- points_2D[which(total_labels != -1),]
+      colors <- rainbow(length(ppaths) + length(ppaths[[1]]))
+      i = 1
+      for(el in ppaths){
+        for(path in el){
+          lines(path[,1], path[,2],lwd=3,col=colors[i],type="o",pch=i)
+          i <- i + 1
+        }
+      }
 
-    if(!is.null(mask)){
-      X_2D <- points_2D[mask,]
-      X_garbage_2D <- points_2D[!mask, ]
-      X_labels <- X_labels[mask]
-    }
+      if(!is.null(mask)){
+        X_garbage <- X[!mask,]
+        X_labels_garbage <- X_labels[!mask]
+        points(X_garbage[,1],X_garbage[,2], col="gray", pch="x")
+      }
+    }else{
+      if(is.null(perplexity_value)){
+        perplexity_value<-ceiling(nrow(X)*3/50)
+        #message("Perplexity is ",perplexity_value)
+      }
+      perturbed_paths <- spathial_res$perturbed_paths
 
-    colors <- rainbow(length(table(X_labels)))
-    colors_labels <- sapply(X_labels, function(x){colors[x]})
+      perturbed_paths_matrix <- matrix(nrow = 0, ncol = ncol(X))
+      perturbed_path_labels <- matrix(nrow=0, ncol=1)
 
-    plot(points_2D[,1],points_2D[,2], col=colors_labels, pch=as.character(X_labels))
-    points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="black",cex=4)
-    lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch=15)
-    if(!is.null(mask)){
-      points(X_garbage_2D[,1],X_garbage_2D[,2], col="gray", pch="x")
+      i <- -1
+      for(el in perturbed_paths){
+        for(path in el){
+          path <- as.matrix(path)
+          perturbed_paths_matrix <- rbind(perturbed_paths_matrix, path)
+          perturbed_path_labels <- c(perturbed_path_labels, rep(i, nrow(path)))
+          i <- i - 1
+        }
+      }
+
+      total_labels <- c(X_labels, perturbed_path_labels)
+      all_points <- rbind(X, perturbed_paths_matrix)
+
+      tsne_res <- Rtsne::Rtsne(as.matrix(all_points), dims = 2, perplexity = perplexity_value, check_duplicates = FALSE)
+      points_2D <- tsne_res$Y
+
+      boundary_ids_2D <- points_2D[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
+      ppath_2D <- points_2D[which(total_labels < 0),]
+      points_2D <- points_2D[which(total_labels > 0),]
+
+      if(!is.null(mask)){
+        X_2D <- points_2D[mask,]
+        X_garbage_2D <- points_2D[!mask, ]
+        X_labels <- X_labels[mask]
+      }
+
+      colors_points <- rainbow(length(table(X_labels)))
+      colors_labels <- sapply(X_labels, function(x){colors_points[x]})
+
+      plot(points_2D[,1],points_2D[,2], col=colors_labels, pch=as.character(X_labels))
+      points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="black",cex=4)
+
+      colors_path <- rainbow(length(unique(perturbed_path_labels)))
+      colors_labels_ppath <- sapply(perturbed_path_labels, function(x){colors_path[abs(x)]})
+
+      i <- 1
+      for(el in (unique(perturbed_path_labels))){
+        message(dim(ppath_2D[which(perturbed_path_labels==el),]))
+        lines(ppath_2D[which(perturbed_path_labels==el),1], ppath_2D[which(perturbed_path_labels==el),2],lwd=3,col=colors_labels_ppath[which(perturbed_path_labels == el)],type="o",pch=i)
+        i <- i + 1
+      }
+      if(!is.null(mask)){
+        points(X_garbage_2D[,1],X_garbage_2D[,2], col="gray", pch="x")
+      }
     }
   }
 }
