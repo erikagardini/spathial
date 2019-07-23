@@ -137,10 +137,7 @@ spathialPrefiltering <- function(X, X_labels, boundary_ids){
 #'   \item ppath_parturbed: all the spathial waypoints for each perturbation
 #'}
 #' @export
-spathialWay <- function(X, X_labels, boundary_ids, NC=50, neighbors = NULL){
-  if(is.null(neighbors)){
-    neighbors <- 0
-  }
+spathialWay <- function(X, X_labels, boundary_ids, NC=50, neighbors = 0){
   if(neighbors == 0){
     ppath <- compute_spathial(X, boundary_ids, NC)
     colnames(ppath) <- colnames(X)
@@ -156,8 +153,12 @@ spathialWay <- function(X, X_labels, boundary_ids, NC=50, neighbors = NULL){
     starting_class_neighbour <- find_nearest_points(X[which(rownames(X) == boundary_ids[1]),], element_starting_class, neighbors+1)
     ending_class_neighbour <- find_nearest_points(X[which(rownames(X) == boundary_ids[2]),], element_ending_class, neighbors+1)
 
+    tot_path <- length(starting_class_neighbour) * length(ending_class_neighbour)
+    i <- 1
     perturbed_paths <- lapply(starting_class_neighbour, function(x){
       lapply(ending_class_neighbour, function(y){
+        message(paste0("Path ", i, "/", tot_path))
+        i <<- i + 1
         boundary_ids <- c(x, y)
         perturbed <- compute_spathial(X, boundary_ids, NC)
         colnames(perturbed) <- colnames(X)
@@ -341,7 +342,6 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
 
       i <- 1
       for(el in (unique(perturbed_path_labels))){
-        message(dim(ppath_2D[which(perturbed_path_labels==el),]))
         lines(ppath_2D[which(perturbed_path_labels==el),1], ppath_2D[which(perturbed_path_labels==el),2],lwd=3,col=colors_labels_ppath[which(perturbed_path_labels == el)],type="o",pch=i)
         i <- i + 1
       }
