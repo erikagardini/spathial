@@ -368,12 +368,17 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
 #'}
 #' @export
 spathialStatistics <- function(spathial_res){
+
   #Mean of z scores (with Fisher transformation)
   if(!is.null(spathial_res$perturbed_paths)){
     z_scores_perturbed_paths <- lapply(spathial_res$perturbed_paths, function(x){
       lapply(x, function(y){
         z_scores <- apply(y, 2, function(z){
-          DescTools::FisherZ(cor(z, c(1:length(z))))
+          if(sd(z) == 0){
+            return(0)
+          }else{
+            DescTools::FisherZ(cor(z, c(1:length(z))))
+          }
         })
       })
     })
@@ -401,7 +406,11 @@ spathialStatistics <- function(spathial_res){
     correlations <- lapply(spathial_res$perturbed_path, function(x){
       lapply(x, function(y){
         corr <- apply(y, 2, function(z){
-          cor(z, c(1:length(z)))
+          if(sd(z) == 0){
+            return(0)
+          }else{
+            cor(z, c(1:length(z)))
+          }
         })
       })
     })
@@ -425,9 +434,46 @@ spathialStatistics <- function(spathial_res){
     correlations <- as.list(correlations)
     names(correlations) <- colnames(spathial_res$ppath)
 
+    #Mean of ranks
+    ranks <- lapply(spathial_res$perturbed_path, function(x){
+      lapply(x, function(y){
+        corr <- apply(y, 2, function(z){
+          if(sd(z) == 0){
+            return(0)
+          }else{
+            abs(cor(z, c(1:length(z))))
+          }
+        })
+        return(rank(corr))
+      })
+    })
+
+    count <- 0
+    sum <- array(data=0, dim=c(ncol(spathial_res$ppath)))
+    for(i in (1:length(ranks))){
+      A <- ranks[[i]]
+      for(j in (1:length(A))){
+        B <- A[[j]]
+        for(k in (1:length(B))){
+          sum[k] <- sum[k] +  B[k]
+        }
+        count <- count + 1
+      }
+    }
+
+    ranks <- sapply(sum, function(x){
+      corr_avg <- x/count
+    })
+    ranks <- as.list(ranks)
+    names(ranks) <- colnames(spathial_res$ppath)
+
   }else{
     correlations <- lapply(spathial_res$ppath, function(x){
-      cor(x, c(1:length(x)))
+      if(sd(x) == 0){
+        return(0)
+      }else{
+        cor(x, c(1:length(x)))
+      }
     })
     names(correlations) <- colnames(spathial_res$ppath)
     fisher <- NULL
@@ -435,7 +481,8 @@ spathialStatistics <- function(spathial_res){
 
   outlist<-list(
     correlations=correlations,
-    fisher=fisher
+    fisher=fisher,
+    ranks=ranks
   )
   return(outlist)
 }
