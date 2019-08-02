@@ -206,6 +206,7 @@ spathialLabels <- function(X, X_labels, spathial_res){
 #' @param X_labels labels of the data points
 #' @param boundary_ids waypoints
 #' @param spathial_res A list of objects
+#' @param ... Parameters which will be inherited by plot()
 #' \itemize{
 #'   \item ppath: principal path from the starting point to the ending point
 #'   \item ppath_perturbed: all the perturbed paths
@@ -213,9 +214,9 @@ spathialLabels <- function(X, X_labels, spathial_res){
 #' @param perplexity_value the value for TSNE perplexity (default is nrsamples*3/50)
 #' @param mask the mask of the sample to preserve (when prefiltering is computed)
 #' @export
-spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_value=NULL, mask=NULL){
+spathialPlot <- function(X, X_labels, boundary_ids, spathial_res,
+                         perplexity_value=NULL, mask=NULL, ...){
   set.seed(1)
-
   if(is.null(spathial_res$perturbed_paths)){
     if(ncol(X) == 2){
       ppath <- spathial_res$ppath
@@ -224,7 +225,7 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
       colors_labels <- sapply(X_labels, function(x){colors[x]})
       boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
 
-      plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels))
+      plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels),...)
       points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
       lines(ppath[,1], ppath[,2],lwd=3,col="red",type="o",pch=15)
       if(!is.null(mask)){
@@ -262,7 +263,7 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
       colors <- rainbow(length(table(X_labels)))
       colors_labels <- sapply(X_labels, function(x){colors[x]})
 
-      plot(points_2D[,1],points_2D[,2], col=colors_labels, pch=as.character(X_labels))
+      plot(points_2D[,1],points_2D[,2], col=colors_labels, pch=as.character(X_labels),...)
       points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="black",cex=4)
       lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch=15)
       if(!is.null(mask)){
@@ -278,7 +279,7 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
       colors_labels <- sapply(X_labels, function(x){colors[x]})
       boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
 
-      plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels))
+      plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels),...)
       points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
 
       colors <- rainbow(length(ppaths) + length(ppaths[[1]]))
@@ -334,7 +335,7 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
       colors_points <- rainbow(length(table(X_labels)))
       colors_labels <- sapply(X_labels, function(x){colors_points[x]})
 
-      plot(points_2D[,1],points_2D[,2], col=colors_labels, pch=as.character(X_labels))
+      plot(points_2D[,1],points_2D[,2], col=colors_labels, pch=as.character(X_labels),...)
       points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="black",cex=4)
 
       colors_path <- rainbow(length(unique(perturbed_path_labels)))
@@ -467,17 +468,18 @@ spathialStatistics <- function(spathial_res){
     ranks <- as.list(ranks)
     names(ranks) <- colnames(spathial_res$ppath)
 
-  }else{
-    correlations <- lapply(spathial_res$ppath, function(x){
+  }else{ # When a single path is present
+    correlations <- sapply(spathial_res$ppath, function(x){
       if(sd(x) == 0){
         return(0)
       }else{
         cor(x, c(1:length(x)))
       }
     })
-    names(correlations) <- colnames(spathial_res$ppath)
-    fisher <- NULL
-    ranks <- NULL
+    correlations<-unlist(correlations)
+    names(correlations)<-colnames(spathial_res$ppath)
+    fisher <- correlations
+    ranks <- rank(correlations)
   }
 
   outlist<-list(
