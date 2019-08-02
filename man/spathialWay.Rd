@@ -4,7 +4,7 @@
 \alias{spathialWay}
 \title{Compute Principal Path}
 \usage{
-spathialWay(X, X_labels, boundary_ids, NC = 50, neighbors = NULL)
+spathialWay(X, X_labels, boundary_ids, NC = 50, neighbors = 0)
 }
 \arguments{
 \item{X}{data points}
