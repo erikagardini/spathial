@@ -15,7 +15,7 @@ knitr::opts_chunk$set(fig.width=7, fig.height=5)
 The _spathial_ package contains function to create a path able to navigate a n-dimensional space.
 
 # Quick start
-In this section we show the most basic steps to compute the _spathial_ implementation of the principal path [citation needed], through a simple 2-dimensional example.
+In this section we show the most basic steps to compute the _spathial_ implementation of the principal path [__citation needed__], through a simple 2-dimensional example.
 
 Let's start installing spathial to ensure that all the needed spackages are installed.
 ```{r eval=FALSE}
