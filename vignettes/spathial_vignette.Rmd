@@ -272,24 +272,32 @@ statistics$correlations
 
 
 # A slightly more complex example
-In this section we show another example with more than 2-dimensions. In this case our input matrix ```X``` is a reduced version of the TCGA Liver Cancer dataset which is composed only by the 100 features (genes) with the highest variance. The vector ```X_labels``` contains the information about the patiens. In particular, the label is 2 when the patiens is healthy, 1 otherwise.
+In this section we show a higher-dimensionality example, with 100 features. In this case our input matrix ```X``` is a reduced version of the TCGA Liver Cancer RNA-Seq dataset which is composed only by the 100 features (gene expression profiles, RPM-normalized) with the highest variance across the dataset. The vector ```X_labels``` contains the information about the samples. In particular, the label is 1 for tumor samples, and 2 for normal liver samples, collected in the same dataset.
 
-In this case, the aim of the example is to navigate the space fram the centroid of the healthy patients to the centroid of the unhealthy patients in order to gradually morphing from one health state to the other.
+In this case, the aim of the example is to navigate the space from the centroid of the normal tissue samples (label 2) to the centroid of the tumor samples (label 1) in order to gradually morphing from one histological state to the other.
 
 The prefiltering won't be executed since we are searching for a global solution.
 
-The following code chuncks show how to compute the principal path algorithm:
+The following code blocks show how to compute the principal path algorithm. First, we load the data from a CSV file containing RPM-normalized gene expression data:
 
-```r
-#Load data
+```{r}
+# Load data
 myfile<-system.file("extdata", "liver_tcga_example1.csv", package = "spathial")
-data<-read.csv(myfile,as.is=TRUE,header=TRUE)
-X <- data[,2:(dim(data)[2]-1)]
-X_labels <- data[,dim(data)[2]]
-rownames(X)<-data[,1]
+data<-read.csv(myfile,as.is=TRUE,header=TRUE,row.names=1)
+data[1:4,1:5]
+```
 
+We then transform it into two objects: the numeric gene expression profiles (```X```) and the associations between samples and sample Category (```X_labels```), where 1 indicates a tumor sample, and 2 a normal tissue sample.
+```{r}
+X <- data[,1:(ncol(data)-1)]
+X_labels <- data[,"Category"]
+X[1:4,1:5]
+```
+```{r results="hide"}
 # Choose the starting and the ending points
-boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=2, from=2, to=1)#from="TCGA-DD-A39W-11A-11R-A213-07", to="TCGA-G3-AAV2-01A-11R-A37K-07")
+boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=2, from=2, to=1)
+# Alternative, mode 3: 
+# from="TCGA-DD-A39W-11A-11R-A213-07", to="TCGA-G3-AAV2-01A-11R-A37K-07"
 boundary_ids <- boundary_init$boundary_ids
 X <- boundary_init$X
 X_labels <- boundary_init$X_labels
@@ -298,83 +306,66 @@ X_labels <- boundary_init$X_labels
 NC <- 50
 spathial_res <- spathial::spathialWay(X, X_labels, boundary_ids, NC, neighbors = 0)
 ```
-What follow is the code to analize the results:
+In order to visualize the multi-dimensional dataset on two dimensions, we perform a TSNE analysis on it (__CITATION NEEDED__).
 
-```r
-#Labels for each waypoint with knn
+```{r fig.cap="_Principal Path across the TCGA Liver Cancer dataset_"}
+# Plot the path in 2D using Rtsne
+spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res,
+                       perplexity_value=30,
+                       xlab="TSNE1",ylab="TSNE2")
+
+```
+
+```{r fig.cap='_Liver Cancer example - path labels across path steps_'}
+# Labels for each waypoint with knn
 ppath_labels <- spathial::spathialLabels(X, X_labels, spathial_res)
-
-#Plot the path in 2D using Rtsne
-spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value=30)
-
-#Correlation along the path
-spathial::statistics <- spathialStatistics(spathial_res)
-```
-The result of the ```spathialLabels``` function can be plotted with the following script:
-
-```r
+# Plot the results
 ppath_labels <- as.vector(ppath_labels)
-colors <- rainbow(length(table(X_labels)))
 colors_labels_ppath <- sapply(ppath_labels, function(y){colors[as.integer(y)]})
-plot(c(1:length(ppath_labels)), c(ppath_labels), col=colors_labels_ppath, pch=as.character(ppath_labels))
+plot(c(1:length(ppath_labels)), c(ppath_labels), col=colors_labels_ppath,
+     pch=as.character(ppath_labels), xlab="Path Step", ylab="Sample Label",
+     main="Path progression"
+)
 ```
 
-The following pictures shows the labels of the principal path and the result of the function ```spathialPlot```:
-
-![_Liver example: principal path labels_](figures/liver_tcga_singlepath/labels.png){width=50%}
-
-![_Liver example: principal path_](figures/liver_tcga_singlepath/pp_plot.png){width=50%}
-
-In this case, the statistics are particular interesting. 
-In fact, they contains information about the correlation between each feature (genes) of the principal path and a vector from 1 to NC+2 (where NC is the number of waypoints) and help to find the genes particularly involved with the evolution from the healthy to the unhealthy state.
-
-The following code chunck show how to plot the 20 features more involved in the evolution:
-
-```r
-corr_values <- as.numeric(unlist(statistics$correlations))
-arg_sort <- rank(-abs(corr_values))
-indexes <- which(arg_sort < 20)
-
-sub_correlation_matrix <- matrix(data=0, nrow = (length(indexes)), ncol = 1)
-colnames(sub_correlation_matrix) <- "pp"
-rownames(sub_correlation_matrix) <- colnames(X[indexes])
-sub_correlation_matrix[,ncol(sub_correlation_matrix)] <- corr_values[indexes]
-
-library(corrplot)
-library(RColorBrewer)
-corrplot(sub_correlation_matrix, method="circle", is.corr=FALSE, cl.pos = "r", cl.ratio = 1, cl.lim = c(-1,1))
-
+We can quickly extract the gene expression profiles most correlated with the path:
+```{r}
+# Correlation along the path
+statistics<-spathialStatistics(spathial_res)
+```
+In this case, the statistics are particularly interesting, as they show the functional genes most associated to the transition between normal and tumor liver tissues. 
+In fact, they contain information about the correlation between each feature (genes) of the principal path and a vector from 1 to NC+2 (where NC is the number of waypoints) and help to find the genes particularly involved with the evolution from the healthy to the unhealthy state. The following code blocks highlights the 10 genes most positively and the 10 most negatively associated to the normal-tumor path progression:
+```{r}
+singlepath_correlations<-statistics$correlations
+top_positive_correlations<-sort(singlepath_correlations,decreasing=TRUE)[1:10]
+top_positive_correlations
+top_negative_correlations<-sort(singlepath_correlations,decreasing=FALSE)[1:10]
+top_negative_correlations
 ```
 
-The following picture shows the corresponding output:
+# Running multiple paths
+When working with high dimensional data, one of the problems that could occur is the overfitting. This means that the principal path algorithm could find a lot of different features all correlated with the evolution from the starting point to the ending one. 
+If you are interested in finding a restricted group of features which are very correlated with the _spathial_ path progression across a dataset, we suggest to use a more complex version of the function ```spathialWay```. It takes as input the parameter ```neighbors > 0``` and perform a refined version of the principal path algorithm.
 
-![_Liver example: correlation feature/evolution_](figures/liver_tcga_singlepath/correlation.png){width=50%}
+The following picture graphically explains how this version of the function ```spathialWay``` works when ```neighbors = 2```:
 
-This picture identifies the genes that could be particolarly involved during the evolution from healthy to unhealthy. 
+![_Graphical represemtatopm of the perturbed path_](figures/simple_multipath_example.png){width=50%}
 
-# How to work with high-dimensional data
-When you want to work with high dimensional data, one of the problems that could occur is the overfitting. This means that the principal path algorithm could find a lot of different features all correlated with the evolution from the starting point to the ending one. 
+It selects the ```neighbors``` nearest data points to the starting and the ending points and computes the principal path algorithm for each combination. This refined procedure allows to compute ```neighbors*neighbors``` paths: one of them is the normal principal path and the others can be considered as perturbation of the first one.
 
-If you are interested in finding a restricted group of features which are very correlated with the evolution, we suggest to use a more complex version of the function ```spathialWay```. It takes as input the parameter ```neighbour > 0``` and perform a refined version of the principal path algorithm.
+The correlation can now be computed as mean of the correlations of each path __PLEASE CONSIDER USING THE FISHER WAY AS THE DEFAULT ONE TO AVERAGE CORRELATIONS__. Additionally, in the example we provide the Fisher's method to integrate correlations (```fisher_correlations```) and an average of the feature correlation coefficient ranks across the perturbed paths (```rank_scores```) as extra values to measure feature/path correlation strength.
 
-The following picture graphically explain how this version of the function ```spathialWay``` works when ```neighbour = 2```:
-
-![_Graphical examplanetion of the perturbed path_](figures/liver_tcga_multipath/simple_multipath_example.png){width=50%}
-
-It selects the ```neighbour``` nearest data points to the starting and the ending points and computes the principal path algorithm for each combination. This refined procedure allows to compute ```neighbour*neighbour``` paths: one of them is the normal principal path and the others can be considered as perturbation of the first one.
-
-The correlation can now be computed as mean of the correlations of each path. In this case, the statistics output is enriched with the ```fisher_correlations``` and the ```rank_scores``` parameters.
-
-The following code chunck shows an example of the ```spathialWay``` function with ```neighbour = 1``` and the same dataset of the previous example:
-
-```r
-####Load input data
+The following code box shows an example of the ```spathialWay``` function with ```neighbors = 1``` and the same dataset of the previous example. We will load again the RPM-normalized Liver Cancer expression data:
+```{r results="hide",message="hide"}
+#### Load input data
 myfile<-system.file("extdata", "liver_tcga_example1.csv", package = "spathial")
-data<-read.csv(myfile,as.is=TRUE,header=TRUE)
-X <- data[,2:(ncol(data)-1)]
-rownames(X)<-paste0("sam",rownames(X))
-X_labels <- data$Y
-
+data<-read.csv(myfile,as.is=TRUE,header=TRUE,row.names=1)
+X <- data[,1:(ncol(data)-1)]
+X_labels <- data[,"Category"]
+head(X)
+```
+Then, as before, we will select the starting and ending points and run _spathial_ to identify multiple paths between them. This example will take a few seconds, depending on the computer.
+```{r results="hide",message="hide"}
 #### Choose the starting and the ending points
 boundary_init <- spathialBoundaryIds(X, X_labels, mode=2, from=2, to=1)
 boundary_ids <- boundary_init$boundary_ids
@@ -384,33 +375,30 @@ X_labels <- boundary_init$X_labels
 # Compute spathial
 NC <- 50
 spathial_res <- spathialWay(X, X_labels, boundary_ids, NC, neighbors = 1)
-
-#Plot the path in 2D using Rtsne
-spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value=30)
-
-# ####Correlation along the path
-statistics <- spathialStatistics(spathial_res)
-
-#Plot the results
-corr_values <- as.numeric(unlist(statistics$correlations))
-arg_sort <- rank(-abs(corr_values))
-indexes <- which(arg_sort < 20)
-
-sub_correlation_matrix <- matrix(data=0, nrow = (length(indexes)), ncol = 1)
-colnames(sub_correlation_matrix) <- "pp"
-rownames(sub_correlation_matrix) <- colnames(X[indexes])
-sub_correlation_matrix[,ncol(sub_correlation_matrix)] <- corr_values[indexes]
-
-library(corrplot)
-library(RColorBrewer)
-corrplot(sub_correlation_matrix, method="circle", is.corr=FALSE, cl.pos = "r", cl.ratio = 1, cl.lim = c(-1,1))
 ```
 
-The following pictures show the output of the example:
+```{r fig.cap="_Rtsne representation of the Liver Cancer dataset with multiple perturbed paths (depicted as lines of different colors)_"}
+# Plot the path in 2D using Rtsne
+spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value=30,
+             xlab="TSNE1",ylab="TSNE2")
+```
 
-![_Liver example: principal and perturbed paths_](figures/liver_tcga_multipath/multipath.png){ width=50% }
+```{r}
+#### Correlation along the path
+statistics<-spathialStatistics(spathial_res)
+```
 
-__Warning__: the grater is the value of the parameter ```neighbour > 5```, the slower is the algorithm. Our recommendation is to use ```neighbour < 5```. 
+We can compare the gene scores obtained with the multiple path approach with those obtained by the single path calculations, stored in ```singlepath_correlations```
+```{r fig.cap="_Comparison between feature correlation values in Single Path and Multiple Path_"}
+# Compare the results
+multipath_correlations<-statistics$correlations
+plot(singlepath_correlations,multipath_correlations,pch=20,
+     xlab="Gene Correlation Coefficients with Single Path",
+     ylab="Gene Correlation Coefficients with Multiple Path"
+)
+grid()
+```
+__Warning__: the greater is the value of the parameter ```neighbors > 5```, the slower is the algorithm. Our recommendation is to use ```neighbors <= 5```. 
 
 
 

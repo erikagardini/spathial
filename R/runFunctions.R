@@ -402,8 +402,9 @@ spathialStatistics <- function(spathial_res){
     })
     fisher <- as.list(fisher)
     names(fisher) <- colnames(spathial_res$ppath)
+    fisher<-unlist(fisher)
 
-    #Simple mean of correlation
+    # Simple mean of correlation
     correlations <- lapply(spathial_res$perturbed_path, function(x){
       lapply(x, function(y){
         corr <- apply(y, 2, function(z){
@@ -434,6 +435,7 @@ spathialStatistics <- function(spathial_res){
     })
     correlations <- as.list(correlations)
     names(correlations) <- colnames(spathial_res$ppath)
+    correlations<-unlist(correlations)
 
     #Mean of ranks
     ranks <- lapply(spathial_res$perturbed_path, function(x){
@@ -467,6 +469,7 @@ spathialStatistics <- function(spathial_res){
     })
     ranks <- as.list(ranks)
     names(ranks) <- colnames(spathial_res$ppath)
+    ranks<-unlist(ranks)
 
   }else{ # When a single path is present
     correlations <- sapply(spathial_res$ppath, function(x){
