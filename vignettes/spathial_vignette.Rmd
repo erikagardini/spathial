@@ -1,6 +1,7 @@
 ---
 title: "A short introduction to the Spathial Package"
 output: rmarkdown::html_vignette
+#output: pdf_document
 vignette: >
   %\VignetteIndexEntry{Vignette Title}
   %\VignetteEngine{knitr::rmarkdown}
