@@ -2,7 +2,12 @@ Package: spathial
 Type: Package
 Title: Spathial: an algorithm to find paths in data space
 Version: 0.1.1
-Author: Erika Gardini, Federico M. Giorgi, Sergio Decherchi
+Authors@R: person("Erika", "Gardini", email = "erika.gardini4@unibo.it",
+  role = c("aut", "cre"))
+  person("Federico M.", "Giorgi", email = "federico.giorgi@unibo.it",
+  role = c("aut", "cre"))
+  person("Sergio", "Decherchi", email = "sergio.decherchi@iit.it",
+  role = c("aut", "cre"))
 Maintainer: Erika Gardini <erika.gardini4@unibo.it>
 Description: spathial is an algorithm to calculate and define principal paths
   in data space.
@@ -19,8 +24,7 @@ Imports:
     MASS,
     Rtsne,
     DescTools,
-    class
-Suggests:
+    class,
     utils,
     knitr,
     rmarkdown

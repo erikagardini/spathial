@@ -238,18 +238,18 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
         #message("Perplexity is ",perplexity_value)
       }
       ppath <- spathial_res$ppath
-      ppath <- ppath[2:(nrow(ppath)-1),]
+      #ppath <- ppath[2:(nrow(ppath)-1),]
       rownames(ppath) <- paste("ppath",1:nrow(ppath))
       ppath_labels <- array(data = -1, dim=(nrow(ppath)))
       total_labels <- c(X_labels, ppath_labels)
       all_points <- rbind(X, ppath)
 
-      tsne_res <- Rtsne::Rtsne(as.matrix(all_points), dims = 2, perplexity = perplexity_value)
+      tsne_res <- Rtsne::Rtsne(as.matrix(all_points), dims = 2, perplexity = perplexity_value, check_duplicates=FALSE)
       points_2D <- tsne_res$Y
 
       boundary_ids_2D <- points_2D[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
       ppath_2D <- points_2D[which(total_labels == -1),]
-      ppath_2D <- rbind(boundary_ids_2D[1,], ppath_2D, boundary_ids_2D[2,])
+      #ppath_2D <- rbind(boundary_ids_2D[1,], ppath_2D, boundary_ids_2D[2,])
 
       points_2D <- points_2D[which(total_labels != -1),]
 
@@ -477,6 +477,7 @@ spathialStatistics <- function(spathial_res){
     })
     names(correlations) <- colnames(spathial_res$ppath)
     fisher <- NULL
+    ranks <- NULL
   }
 
   outlist<-list(
