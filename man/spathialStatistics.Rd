@@ -23,3 +23,11 @@ A list of objects
 \description{
 Get how much the features correlate with the path
 }
+\examples{
+load("X.rda")
+load("X_labels.rda")
+boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+NC <- 20
+spathialRes <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC, neighbors = 1)
+statistics <- spathialStatistics(spathialRes)
+}

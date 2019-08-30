@@ -33,3 +33,8 @@ A list of objects
 \description{
 Get the coordinates of the starting and ending points
 }
+\examples{
+load("X.rda")
+load("X_labels.rda")
+boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+}

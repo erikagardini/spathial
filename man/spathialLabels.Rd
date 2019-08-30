@@ -23,3 +23,19 @@ ppath_labels - labels of the waypoints
 \description{
 Get the label of each waypoint accordin to the neighbourhood
 }
+\examples{
+load("X.rda")
+load("X_labels.rda")
+boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+NC <- 20
+spathialRes <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC, neighbors = 1)
+labels <- spathialLabels(boundaryRes$X, boundaryRes$X_labels, spathialRes)
+
+load("X.rda")
+load("X_labels.rda")
+boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids)
+NC <- 20
+spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC, neighbors = 1)
+labels <- spathialLabels(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], spathialRes)
+}

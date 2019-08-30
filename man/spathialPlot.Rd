@@ -5,7 +5,7 @@
 \title{2D spathial}
 \usage{
 spathialPlot(X, X_labels, boundary_ids, spathial_res,
-  perplexity_value = NULL, mask = NULL)
+  perplexity_value = NULL, mask = NULL, ...)
 }
 \arguments{
 \item{X}{data points}
@@ -14,16 +14,34 @@ spathialPlot(X, X_labels, boundary_ids, spathial_res,
 
 \item{boundary_ids}{waypoints}
 
-\item{spathial_res}{A list of objects
-\itemize{
-  \item ppath: principal path from the starting point to the ending point
-  \item ppath_perturbed: all the perturbed paths
-}}
+\item{spathial_res}{A list of objects}
 
 \item{perplexity_value}{the value for TSNE perplexity (default is nrsamples*3/50)}
 
 \item{mask}{the mask of the sample to preserve (when prefiltering is computed)}
+
+\item{...}{Parameters which will be inherited by plot()
+\itemize{
+  \item ppath: principal path from the starting point to the ending point
+  \item ppath_perturbed: all the perturbed paths
+}}
 }
 \description{
 Get the 2D coordinates of each waypoint (using t-SNE algorithm for the dimensionality reduction)
+}
+\examples{
+load("X.rda")
+load("X_labels.rda")
+boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+NC <- 20
+spathialRes <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC, neighbors = 1)
+spathialPlot(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, spathialRes, perplexity_value=30)
+
+load("X.rda")
+load("X_labels.rda")
+boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids)
+NC <- 20
+spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC, neighbors = 1)
+spathialPlot(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, spathialRes, perplexity_value=30, filterRes$mask)
 }

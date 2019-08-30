@@ -27,3 +27,17 @@ A list of objects
 \description{
 Get the coordinates of the waypoints of the principal path
 }
+\examples{
+load("X.rda")
+load("X_labels.rda")
+boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+NC <- 20
+spathialRes <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC, neighbors = 1)
+
+load("X.rda")
+load("X_labels.rda")
+boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids)
+NC <- 20
+spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC, neighbors = 1)
+}
