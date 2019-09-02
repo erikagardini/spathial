@@ -4,7 +4,7 @@
 \alias{spathialBoundaryIds}
 \title{Select starting and ending points}
 \usage{
-spathialBoundaryIds(X, X_labels, mode = 2, from = NULL, to = NULL)
+spathialBoundaryIds(X, X_labels, mode = 1, from = NULL, to = NULL)
 }
 \arguments{
 \item{X}{data points}
@@ -13,8 +13,8 @@ spathialBoundaryIds(X, X_labels, mode = 2, from = NULL, to = NULL)
 
 \item{mode}{strategy for boundary selection
 \itemize{
-  \item 1 - centroids
-  \item 2 - selected by the user
+  \item 1 - selected by the user
+  \item 2 - centroids
   \item 3 - insert the row name of the starting and ending points
 }}
 
@@ -34,7 +34,10 @@ A list of objects
 Get the coordinates of the starting and ending points
 }
 \examples{
-load("X.rda")
-load("X_labels.rda")
+# Load data matrix X
+load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
+# Load description vector X_labels
+load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
+# Run spathialBoundary
 boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
 }

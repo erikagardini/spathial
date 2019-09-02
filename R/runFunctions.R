@@ -19,8 +19,11 @@
 #'   \item X_labels: the new labels of the data matrix with the boundary labels
 #' }
 #' @examples
-#' load("~/spathial/inst/extdata/X.rda")
-#' load("~/spathial/inst/extdata/X_labels.rda")
+#' # Load data matrix X
+#' load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
+#' # Load description vector X_labels
+#' load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
+#' # Run spathialBoundary
 #' boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
 #' @export
 spathialBoundaryIds <- function(X, X_labels, mode = 1, from = NULL, to = NULL){
@@ -104,21 +107,22 @@ spathialBoundaryIds <- function(X, X_labels, mode = 1, from = NULL, to = NULL){
 #'
 #' Regularized K-means for principal path: prefiltering
 #'
-#' @param X a data matrix
+#' @param X data points
 #' @param X_labels labels of the data points
 #' @param boundary_ids names of the start and ending points, to be treated separately
 #' @return A list of objects
 #' \itemize{
-#'   \item X_filtered: the filtered data matrix
-#'   \item X_labels_filtered: the filtered labels of the data points
-#'   \item boundary_ids_filtered: the filtered boundary ids
-#'   \item X_garbage: the data matrix that was discarded
-#'   \item X_garbage_filtered: the filterad labels that was discarded
+#'   \item mask: indexes of the data points to preserv
+#'   \item boundary_ids: the filtered boundary ids
 #' }
 #' @examples
-#' load("~/spathial/inst/extdata/X.rda")
-#' load("~/spathial/inst/extdata/X_labels.rda")
+#' # Load data matrix X
+#' load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
+#' # Load description vector X_labels
+#' load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
+#' # Run spathialBoundary
 #' boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+#' # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
 #' filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids)
 #' @export
 spathialPrefiltering <- function(X, X_labels, boundary_ids){
@@ -146,18 +150,33 @@ spathialPrefiltering <- function(X, X_labels, boundary_ids){
 #'   \item ppath_parturbed: all the spathial waypoints for each perturbation
 #'}
 #' @examples
-#' load("~/spathial/inst/extdata/X.rda")
-#' load("~/spathial/inst/extdata/X_labels.rda")
+#' #EXAMPLE 1
+#' # Load data matrix X
+#' load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
+#' # Load description vector X_labels
+#' load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
+#' # Run spathialBoundary
 #' boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+#' #Set the number of waypoints
 #' NC <- 20
+#' # Run spathialWay without prefilterint
 #' spathialRes <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC, neighbors = 1)
+#' spathialRes
 #'
-#' load("~/spathial/inst/extdata/X.rda")
-#' load("~/spathial/inst/extdata/X_labels.rda")
+#' #EXAMPLE 2
+#' # Load data matrix X
+#' load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
+#' # Load description vector X_labels
+#' load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
+#' # Run spathialBoundary
 #' boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+#' # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
 #' filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids)
+#' #Set the number of waypoints
 #' NC <- 20
+#' # Run spathialWay with the filtered data
 #' spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC, neighbors = 1)
+#' spathialRes
 #' @export
 spathialWay <- function(X, X_labels, boundary_ids, NC=50, neighbors = 0){
   if(neighbors == 0){
@@ -211,28 +230,45 @@ spathialWay <- function(X, X_labels, boundary_ids, NC=50, neighbors = 0){
 #' }
 #' @return ppath_labels - labels of the waypoints
 #' @examples
-#' load("~/spathial/inst/extdata/X.rda")
-#' load("~/spathial/inst/extdata/X_labels.rda")
+#' #EXAMPLE 1
+#' # Load data matrix X
+#' load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
+#' # Load description vector X_labels
+#' load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
+#' # Run spathialBoundary
 #' boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+#' #Set the number of waypoints
 #' NC <- 20
+#' # Run spathialWay without prefiltering
 #' spathialRes <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC, neighbors = 1)
+#' #Run spathialLabels with spathialRes
 #' labels <- spathialLabels(boundaryRes$X, boundaryRes$X_labels, spathialRes)
+#' labels
 #'
-#' load("~/spathial/inst/extdata/X.rda")
-#' load("~/spathial/inst/extdata/X_labels.rda")
+#' #EXAMPLE 2
+#' # Load data matrix X
+#' load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
+#' # Load description vector X_labels
+#' load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
+#' # Run spathialBoundary
 #' boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+#' # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
 #' filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids)
+#' #Set the number of waypoints
 #' NC <- 20
+#' # Run spathialWay with the filtered data
 #' spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC, neighbors = 1)
+#' #Run spathialLabels with spathialRes
 #' labels <- spathialLabels(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], spathialRes)
+#' labels
 #' @export
 spathialLabels <- function(X, X_labels, spathial_res){
   ppath <- spathial_res$ppath
   X_labels <- X_labels[which(! grepl("Centroid", rownames(X)))]
   X <- X[which(! grepl("Centroid", rownames(X))),]
   ppath_no_centroids <- ppath[2:(nrow(ppath)-1), ]
-  lbl <- class::knn(X, ppath_no_centroids, cl=X_labels, k=1)
-  return(lbl)
+  ppath_labels <- class::knn(X, ppath_no_centroids, cl=X_labels, k=1)
+  return(ppath_labels)
 }
 
 #' 2D spathial
@@ -243,27 +279,41 @@ spathialLabels <- function(X, X_labels, spathial_res){
 #' @param X_labels labels of the data points
 #' @param boundary_ids waypoints
 #' @param spathial_res A list of objects
-#' @param ... Parameters which will be inherited by plot()
 #' \itemize{
 #'   \item ppath: principal path from the starting point to the ending point
 #'   \item ppath_perturbed: all the perturbed paths
 #' }
 #' @param perplexity_value the value for TSNE perplexity (default is nrsamples*3/50)
 #' @param mask the mask of the sample to preserve (when prefiltering is computed)
+#' @param ... Parameters which will be inherited by plot()
 #' @examples
-#' load("~/spathial/inst/extdata/X.rda")
-#' load("~/spathial/inst/extdata/X_labels.rda")
+# Load data matrix X
+#' load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
+#' # Load description vector X_labels
+#' load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
+#' # Run spathialBoundary
 #' boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+#' #Set the number of waypoints
 #' NC <- 20
+#' # Run spathialWay without prefiltering
 #' spathialRes <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC, neighbors = 1)
+#' #Run spathialPlot with spathialRes
 #' spathialPlot(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, spathialRes, perplexity_value=30)
 #'
-#' load("~/spathial/inst/extdata/X.rda")
-#' load("~/spathial/inst/extdata/X_labels.rda")
+#' #EXAMPLE 2
+#' # Load data matrix X
+#' load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
+#' # Load description vector X_labels
+#' load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
+#' # Run spathialBoundary
 #' boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+#' # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
 #' filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids)
+#' #Set the number of waypoints
 #' NC <- 20
+#' # Run spathialWay with the filtered data
 #' spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC, neighbors = 1)
+#' #Run spathialPlot with spathialRes
 #' spathialPlot(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, spathialRes, perplexity_value=30, filterRes$mask)
 #' @export
 spathialPlot <- function(X, X_labels, boundary_ids, spathial_res,
@@ -416,15 +466,23 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res,
 #' }
 #' @return A list of objects
 #' \itemize{
-#'   \item ppath: spathial waypoints
-#'   \item ppath_parturbed: all the spathial waypoints for each perturbation
+#'   \item correlations: Pearson's correlation coefficients between each feature and the path (when ppath_perturbed is not NULL, a Fisher-integrated correlation coefficient is provided)
+#'   \item ranks: ranks of associations between the n features and the path (when ppath_perturbed is not NULL, the mean of the ranks is provided)
 #'}
 #' @examples
-#' load("~/spathial/inst/extdata/X.rda")
-#' load("~/spathial/inst/extdata/X_labels.rda")
+#' # Load data matrix X
+#' load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
+#' # Load description vector X_labels
+#' load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
+#' # Run spathialBoundary
 #' boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+#' # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
+#' filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids)
+#' #Set the number of waypoints
 #' NC <- 20
-#' spathialRes <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC, neighbors = 1)
+#' # Run spathialWay with the filtered data
+#' spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC, neighbors = 1)
+#' #Run spathialStatistics with spathialRes
 #' statistics <- spathialStatistics(spathialRes)
 #' @export
 spathialStatistics <- function(spathial_res){

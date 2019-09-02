@@ -7,7 +7,7 @@
 spathialPrefiltering(X, X_labels, boundary_ids)
 }
 \arguments{
-\item{X}{a data matrix}
+\item{X}{data points}
 
 \item{X_labels}{labels of the data points}
 
@@ -16,19 +16,20 @@ spathialPrefiltering(X, X_labels, boundary_ids)
 \value{
 A list of objects
 \itemize{
-  \item X_filtered: the filtered data matrix
-  \item X_labels_filtered: the filtered labels of the data points
-  \item boundary_ids_filtered: the filtered boundary ids
-  \item X_garbage: the data matrix that was discarded
-  \item X_garbage_filtered: the filterad labels that was discarded
+  \item mask: indexes of the data points to preserv
+  \item boundary_ids: the filtered boundary ids
 }
 }
 \description{
 Regularized K-means for principal path: prefiltering
 }
 \examples{
-load("X.rda")
-load("X_labels.rda")
+# Load data matrix X
+load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
+# Load description vector X_labels
+load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
+# Run spathialBoundary
 boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+# Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
 filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids)
 }

@@ -24,18 +24,35 @@ ppath_labels - labels of the waypoints
 Get the label of each waypoint accordin to the neighbourhood
 }
 \examples{
-load("X.rda")
-load("X_labels.rda")
+#EXAMPLE 1
+# Load data matrix X
+load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
+# Load description vector X_labels
+load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
+# Run spathialBoundary
 boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+#Set the number of waypoints
 NC <- 20
+# Run spathialWay without prefiltering
 spathialRes <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC, neighbors = 1)
+#Run spathialLabels with spathialRes
 labels <- spathialLabels(boundaryRes$X, boundaryRes$X_labels, spathialRes)
+labels
 
-load("X.rda")
-load("X_labels.rda")
+#EXAMPLE 2
+# Load data matrix X
+load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
+# Load description vector X_labels
+load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
+# Run spathialBoundary
 boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+# Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
 filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids)
+#Set the number of waypoints
 NC <- 20
+# Run spathialWay with the filtered data
 spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC, neighbors = 1)
+#Run spathialLabels with spathialRes
 labels <- spathialLabels(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], spathialRes)
+labels
 }

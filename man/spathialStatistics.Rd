@@ -16,18 +16,26 @@ spathialStatistics(spathial_res)
 \value{
 A list of objects
 \itemize{
-  \item ppath: spathial waypoints
-  \item ppath_parturbed: all the spathial waypoints for each perturbation
+  \item correlations: Pearson's correlation coefficients between each feature and the path (when ppath_perturbed is not NULL, a Fisher-integrated correlation coefficient is provided)
+  \item ranks: ranks of associations between the n features and the path (when ppath_perturbed is not NULL, the mean of the ranks is provided)
 }
 }
 \description{
 Get how much the features correlate with the path
 }
 \examples{
-load("X.rda")
-load("X_labels.rda")
+# Load data matrix X
+load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
+# Load description vector X_labels
+load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
+# Run spathialBoundary
 boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+# Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
+filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids)
+#Set the number of waypoints
 NC <- 20
-spathialRes <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC, neighbors = 1)
+# Run spathialWay with the filtered data
+spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC, neighbors = 1)
+#Run spathialStatistics with spathialRes
 statistics <- spathialStatistics(spathialRes)
 }

@@ -376,11 +376,11 @@ __Warning__: the greater is the value of the parameter ```neighbors > 5```, the 
 
 # References
 
-[1] M. J. Ferrarotti, W. Rocchia, and S. Decherchi, “Finding Principal Pathsin  Data  Space,”  IEEE  Transactions  on  Neural  Networks  and  LearningSystems, vol. 30, pp. 2449–2462, Aug. 2019
+[1] M. J. Ferrarotti, W. Rocchia, and S. Decherchi, “Finding Principal Pathsin  Data  Space,”  IEEE Transactions  on  Neural Networks  and  LearningSystems, vol. 30, pp. 2449–2462, Aug. 2019
 
-[2]  L. van der Maaten and G. Hinton, “Viualizing data using t-SNE,” Journalof Machine Learning Research, vol. 9, pp. 2579–2605, Nov. 2008.
+[2]  L. van der Maaten and G. Hinton, “Viualizing data using t-SNE,” Journal of Machine Learning Research, vol. 9, pp. 2579–2605, Nov. 2008.
 
-[3] T.  Cover  and  P.  Hart,  “Nearest  neighbor  pattern  classification,”  IEEETransactions on Information Theory, vol. 13, pp. 21–27, Jan. 1967.
+[3] T. Cover  and  P.  Hart,  “Nearest  neighbor  pattern  classification,”  IEEE Transactions on Information Theory, vol. 13, pp. 21–27, Jan. 1967.
 
 
 
