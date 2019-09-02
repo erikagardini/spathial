@@ -167,7 +167,7 @@ The following code chuncks show how to use the function ```spathialWay```, with 
 ```{r results='hide'}
 # Compute principal path without prefiltering
 NC <- 50
-spathial_res <- spathial::spathialWay(X, X_labels, boundary_ids, NC, neighbors = 0)
+spathial_res_without_filtering <- spathial::spathialWay(X, X_labels, boundary_ids, NC, neighbors = 0)
 ```
 
 ```{r results='hide'}
@@ -175,7 +175,7 @@ spathial_res <- spathial::spathialWay(X, X_labels, boundary_ids, NC, neighbors =
 X_filtered <- X[mask,]
 X_labels_filtered <- X_labels[mask]
 NC <- 50
-spathial_res <- spathial::spathialWay(X_filtered, X_labels_filtered, boundary_ids, NC, neighbors = 0)
+spathial_res_with_filtering <- spathial::spathialWay(X_filtered, X_labels_filtered, boundary_ids, NC, neighbors = 0)
 ```
 
 The next subsection shows how to extract results from the ```spathial_res``` object.
@@ -192,14 +192,14 @@ The following code chuncks show hot to use the function ```spathialPlot``` with 
 ```{r fig.height=10, fig.cap='_Output of the spathialPlot() function. Filtered samples are marked in grey_'}
 par(mfrow=c(2,1))
 # Plot principal path with prefiltering - provide a mask
-spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res,
+spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res_with_filtering,
                        perplexity_value=30, mask=mask,
                        xlab=colnames(X)[1],ylab=colnames(X)[2],
                        main="Principal path with prefiltering"
 )
 
 # Plot principal path without prefiltering - mask NULL
-spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res,
+spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res_without_filtering,
                        perplexity_value=30,
                        xlab=colnames(X)[1],ylab=colnames(X)[2],
                        main="Principal path without prefiltering"
@@ -215,13 +215,23 @@ The following code chuncks show how to use the function ```spathialLabels``` and
 
 ```{r fig.cap='_Quick Start example - path labels across path steps_'}
 ### Matrix X not filtered
-ppath_labels <- spathial::spathialLabels(X, X_labels, spathial_res)
+ppath_labels <- spathial::spathialLabels(X, X_labels, spathial_res_with_filtering)
 # Plot the results
 ppath_labels <- as.vector(ppath_labels)
 colors_labels_ppath <- sapply(ppath_labels, function(y){colors[as.integer(y)]})
 plot(c(1:length(ppath_labels)), c(ppath_labels), col=colors_labels_ppath,
      pch=as.character(ppath_labels), xlab="Path Step", ylab="Sample Label",
-     main="Path progression"
+     main="Path progression with prefiltering"
+)
+
+### Matrix X filtered
+ppath_labels <- spathial::spathialLabels(X, X_labels, spathial_res_without_filtering)
+# Plot the results
+ppath_labels <- as.vector(ppath_labels)
+colors_labels_ppath <- sapply(ppath_labels, function(y){colors[as.integer(y)]})
+plot(c(1:length(ppath_labels)), c(ppath_labels), col=colors_labels_ppath,
+     pch=as.character(ppath_labels), xlab="Path Step", ylab="Sample Label",
+     main="Path progression without prefiltering"
 )
 ```
 
@@ -239,7 +249,13 @@ The following code chunks show how to use the function ```spathialStatistics``` 
 
 ```{r message="hide"}
 # Calculate Association Statistics for each feature in the path
-statistics <- spathial::spathialStatistics(spathial_res)
+statistics <- spathial::spathialStatistics(spathial_res_with_filtering)
+
+# Extract Pearson correlation coefficients between features and path
+statistics$correlations
+
+# Calculate Association Statistics for each feature in the path
+statistics <- spathial::spathialStatistics(spathial_res_without_filtering)
 
 # Extract Pearson correlation coefficients between features and path
 statistics$correlations
