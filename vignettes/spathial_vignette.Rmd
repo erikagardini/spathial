@@ -15,9 +15,9 @@ knitr::opts_chunk$set(fig.width=7, fig.height=5)
 The _spathial_ package contains function to create a path able to navigate a n-dimensional space.
 
 # Quick start
-In this section we show the most basic steps to compute the _spathial_ implementation of the principal path [__citation needed__], through a simple 2-dimensional example.
+In this section we show the most basic steps to compute the _spathial_ implementation of the principal path [1], through a simple 2-dimensional example.
 
-Let's start installing spathial to ensure that all the needed spackages are installed.
+Let's start installing spathial to ensure that all the needed packages are installed.
 ```{r eval=FALSE}
 install.packages("spathial")
 ```
@@ -45,12 +45,12 @@ X_labels <- data$label
 X <- data[,1:(ncol(data)-1)]
 ```
 
-This is how the The Data Matrix ```X``` should look like at this point
+This is how the data matrix ```X``` should look like at this point
 ```{r}
 head(X)
 ```
 
-The sample labels Vector ```X_labels```, assigning categories to each sample,
+The sample labels vector ```X_labels```, assigning categories to each sample,
 according to the order in ```X``` rows
 ```{r}
 head(X_labels)
@@ -65,11 +65,6 @@ colors_labels<-sapply(X_labels,function(x){colors[x]})
 plot(X[,1],X[,2],col=colors_labels,pch=as.character(X_labels),
      xlab=colnames(X)[1],ylab=colnames(X)[2])
 ```
-
-
-<!-- The following picture shows the graphical representation of the datapoints: -->
-<!-- ![_2D constellation example - data points_](figures/2D_constellation/datapoints.png){width=75%} -->
-
 
 ## Step 2: select the boundaries
 The fist step to compute the principal path consists in selecting the starting and the ending points. The package spathial gives you the function ```spathialBoundaryIds``` which takes as input the matrix ```X```, the corresponding labels ```X_labels``` and the parameters ```mode```, ```from``` and ```to```.
@@ -119,8 +114,6 @@ plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels),
 points(X[boundary_ids,],pch="x",col="black",cex=4)
 ```
 
-<!-- ![_2D constellation example - boundaries_](figures/2D_constellation/boundaries.png){width=75%} -->
-
 ## Step 3: prefiltering (optional)
 The principal path is an algorithm intrinsically global. If you are searching for a path which does not involve the whole dataset, you can perform the function ```spathialPrefiltering```  before the principal path algorithm is applied. If you want to run _spathial_ on the entire dataset, this filtering procedure is not due.
 
@@ -155,8 +148,6 @@ plot(X[,1],X[,2], col="black",pch=20,main="After Filtering",
 points(X[boundary_ids,],pch="x",col="red3",cex=4)
 points(X_garbage[,1],X_garbage[,2], col="gray", pch=16)
 ```
-
-<!-- ![_2D constellation example - prefiltering_](figures/2D_constellation/prefiltering.png){width=75%} -->
 
 ## Step 4: principal path
 The function ```spathialWay``` computes the principal path algorithm and gives as output the principal path points. It takes as input the matrix ```X```, the labels ```X_labels```, the boundaries ```boundary_ids``` and the parameters ```NC``` and ```neighbors```. 
@@ -194,7 +185,7 @@ The package _spathial_ includes three different functions to understand the outp
 
 ### Plot principal path
 The function ```spathialPlot``` plots the principal path together with all the data points (filtered and not) and the boundaries. The function takes as input the matrix ```X``` (the initial version), the vector ```X_labels```, the boundaries ```boundary_ids```, the output of the principal path algorithm ```spathial_res```, the parameter ```perplexity value``` (default 30) and the parameter ```mask``` which is one of the result of the prefiltering and it is ```NULL``` when the prefiltering is not computed.
-When the input matrix ```X``` has more than 2 columns, the function reduce the dimension of the space from N (>2) to 2 using the t-SNE algorithm.
+When the input matrix ```X``` has more than 2 columns, the function reduce the dimension of the space from N (>2) to 2 using the t-SNE algorithm [2].
 
 The following code chuncks show hot to use the function ```spathialPlot``` with the principal path generated during the previous step (with and without prefiltering):
 
@@ -214,12 +205,11 @@ spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res,
                        main="Principal path without prefiltering"
 )
 ```
-<!-- The following pictures show the output of the function ```spathialPlot``` for both the examples: -->
-<!-- ![_2D constellation example - principal path without prefiltering_](figures/2D_constellation/pp_no_prefiltering.png){width=75%} -->
-<!-- ![2D constellation example - principal path with prefiltering](figures/2D_constellation/pp_prefiltering.png){width=75%} -->
 
-### Assess path progression __THE PARAGRAPH IS COMPLETELY UNCLEAR. WHY THIS IS USEFUL TO THE NEW USER? WHAT IS KNN? EXPLAIN BETTER__
-The function ```spathialLabels``` assigns to each waypoints of the principal path a label considering the label of the nearest point in the data space. This type of analysis can be useful when you want to verify if the path moves respecting a specific evolution. The function takes as input the matrix ```X``` (which is composed only by the preserved samples if you compute the prefiltering), the vector ```X_labels``` and the output of the principal path algorithm ```spathial_res```. The output are the labels for each waypoint of the principal path.
+### Assess path progression
+The function ```spathialLabels``` predicts the label for each waypoints of the principal path. It is based on the k-nearest neighbors algorithm (k-NN) [3], which is used as classifier and predicts the label of a specific entry considering the most frequent label of its k-nearest neighbors, but it considers only one neighbor.
+__This function could be particularly useful when you want to find the breakpoints between one class and the other.__ 
+The function takes as input the matrix ```X``` (which is composed only by the preserved samples if you compute the prefiltering), the vector ```X_labels``` and the output of the principal path algorithm ```spathial_res```. The output are the labels for each waypoint of the principal path.
 
 The following code chuncks show how to use the function ```spathialLabels``` and how to plot the result:
 
@@ -235,22 +225,15 @@ plot(c(1:length(ppath_labels)), c(ppath_labels), col=colors_labels_ppath,
 )
 ```
 
-<!-- The following pictures show the labels for each waypoint for both the previous examples: -->
-<!-- ![_2D constellation example - labels of the principal path without prefiltering_](figures/2D_constellation/labels_no_prefiltering.png){width=75%} -->
-<!-- ![_2D constellation example - labels of the principal path with prefiltering_](figures/2D_constellation/labels.png){width=75%} -->
-
 ### Extract Features associated to the principal path
-The function ```spathialStatistics``` returns statistics for each feature, based on their relation with th principal path calculated and stored in ```spathial_res```.
+The function ```spathialStatistics``` returns statistics for each feature, based on their relation with the principal path calculated and stored in ```spathial_res```.
 In particular, here we want to focus on how much each feature (a coordinate of the N-dimensional space) is involved along the evolution of the principal path. 
 
 For this reason, the output of the function ```spathialStatistics``` is a list with the following content, associating the features with a specific score associating it with path progression.
 
-* __correlations__: This vector contains the Pearson's correlation coefficients between each feature and the path.
-In the case of multiple paths (see the _neighbor_ parameter, described later in this vignette), a simple arithmetic mean of the correlation coefficients is provided (**Which is simply a WRONG and not accepted mathematical operation and I don't know why you don't want to ackowledge it. This is a huge open flank for statisticians to reject the package and the paper https://www.researchgate.net/post/average_of_Pearson_correlation_coefficient_values https://stats.stackexchange.com/questions/8019/averaging-correlation-values**)
-* __fisher_correlations__; This vector contains the Pearson's correlation coefficients between each feature and the path.
-In the case of multiple paths (see the _neighbor_ parameter, described later in this vignette), a Fisher-integrated correlation coefficient is provided.
+* __correlations__: This vector contains the Pearson's correlation coefficients between each feature and the path. In the case of multiple paths (see the _neighbor_ parameter, described later in this vignette), a Fisher-integrated correlation coefficient is provided.
 * __rank_scores__: This vector contains the ranks of associations between the n features and the path (1 being the most positively correlated, and n the most negatively correlated).
-In the case of multiple paths (see the _neighbor_ parameter, described later in this vignette), a Fisher-integrated correlation coefficient is provided.
+In the case of multiple paths (see the _neighbor_ parameter, described later in this vignette), an average of the feature correlation coefficient ranks across the perturbed paths is provided.
 
 The following code chunks show how to use the function ```spathialStatistics``` and to extract the correlation-based association between features and the path.
 
@@ -261,15 +244,6 @@ statistics <- spathial::spathialStatistics(spathial_res)
 # Extract Pearson correlation coefficients between features and path
 statistics$correlations
 ```
-
-<!-- The following pictures show how much each feature is correlated with the evolution of the principal path (for both the principath paths with and without prefiltering): -->
-
-<!-- ![_2D constellation example - correlation features/evolution without prefiltering_](figures/2D_constellation/correlations_no_prefiltering.png){width=35%}  -->
-
-<!-- ![_2D constellation example - correlation features/evolution with prefiltering_](figures/2D_constellation/correlations_prefiltering.png){width=35%} -->
-
-
-
 
 # A slightly more complex example
 In this section we show a higher-dimensionality example, with 100 features. In this case our input matrix ```X``` is a reduced version of the TCGA Liver Cancer RNA-Seq dataset which is composed only by the 100 features (gene expression profiles, RPM-normalized) with the highest variance across the dataset. The vector ```X_labels``` contains the information about the samples. In particular, the label is 1 for tumor samples, and 2 for normal liver samples, collected in the same dataset.
@@ -306,7 +280,7 @@ X_labels <- boundary_init$X_labels
 NC <- 50
 spathial_res <- spathial::spathialWay(X, X_labels, boundary_ids, NC, neighbors = 0)
 ```
-In order to visualize the multi-dimensional dataset on two dimensions, we perform a TSNE analysis on it (__CITATION NEEDED__).
+In order to visualize the multi-dimensional dataset on two dimensions, we perform a TSNE analysis on it [2].
 
 ```{r fig.cap="_Principal Path across the TCGA Liver Cancer dataset_"}
 # Plot the path in 2D using Rtsne
@@ -353,7 +327,7 @@ The following picture graphically explains how this version of the function ```s
 
 It selects the ```neighbors``` nearest data points to the starting and the ending points and computes the principal path algorithm for each combination. This refined procedure allows to compute ```neighbors*neighbors``` paths: one of them is the normal principal path and the others can be considered as perturbation of the first one.
 
-The correlation can now be computed as mean of the correlations of each path __PLEASE CONSIDER USING THE FISHER WAY AS THE DEFAULT ONE TO AVERAGE CORRELATIONS__. Additionally, in the example we provide the Fisher's method to integrate correlations (```fisher_correlations```) and an average of the feature correlation coefficient ranks across the perturbed paths (```rank_scores```) as extra values to measure feature/path correlation strength.
+The correlation can now be computed as mean of the Fisher's correlations of each path. Additionally, in the example we provide an average of the feature correlation coefficient ranks across the perturbed paths (```rank_scores```) as extra values to measure feature/path correlation strength.
 
 The following code box shows an example of the ```spathialWay``` function with ```neighbors = 1``` and the same dataset of the previous example. We will load again the RPM-normalized Liver Cancer expression data:
 ```{r results="hide",message="hide"}
@@ -400,8 +374,13 @@ grid()
 ```
 __Warning__: the greater is the value of the parameter ```neighbors > 5```, the slower is the algorithm. Our recommendation is to use ```neighbors <= 5```. 
 
+# References
 
+[1] M. J. Ferrarotti, W. Rocchia, and S. Decherchi, “Finding Principal Pathsin  Data  Space,”  IEEE  Transactions  on  Neural  Networks  and  LearningSystems, vol. 30, pp. 2449–2462, Aug. 2019
 
+[2]  L. van der Maaten and G. Hinton, “Viualizing data using t-SNE,” Journalof Machine Learning Research, vol. 9, pp. 2579–2605, Nov. 2008.
+
+[3] T.  Cover  and  P.  Hart,  “Nearest  neighbor  pattern  classification,”  IEEETransactions on Information Theory, vol. 13, pp. 21–27, Jan. 1967.
 
 
 

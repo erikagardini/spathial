@@ -6,8 +6,8 @@
 #' @param X_labels labels of the data points
 #' @param mode strategy for boundary selection
 #' \itemize{
-#'   \item 1 - centroids
-#'   \item 2 - selected by the user
+#'   \item 1 - selected by the user
+#'   \item 2 - centroids
 #'   \item 3 - insert the row name of the starting and ending points
 #' }
 #' @param from starting class or row name of the starting point
@@ -23,7 +23,7 @@
 #' load("~/spathial/inst/extdata/X_labels.rda")
 #' boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
 #' @export
-spathialBoundaryIds <- function(X, X_labels, mode = 2, from = NULL, to = NULL){
+spathialBoundaryIds <- function(X, X_labels, mode = 1, from = NULL, to = NULL){
   if(mode == 1){
     if(ncol(X) < 2){
       stop("X should have at least 2 columns")
@@ -455,46 +455,13 @@ spathialStatistics <- function(spathial_res){
         count <- count + 1
       }
     }
-    fisher <- sapply(sum, function(x){
+    correlations <- sapply(sum, function(x){
       z_avg <- x/count
       return(DescTools::FisherZInv(z_avg))
     })
-    fisher <- as.list(fisher)
-    names(fisher) <- colnames(spathial_res$ppath)
-    fisher<-unlist(fisher)
-
-    # Simple mean of correlation
-    correlations <- lapply(spathial_res$perturbed_path, function(x){
-      lapply(x, function(y){
-        corr <- apply(y, 2, function(z){
-          if(sd(z) == 0){
-            return(0)
-          }else{
-            cor(z, c(1:length(z)))
-          }
-        })
-      })
-    })
-
-    count <- 0
-    sum <- array(data=0, dim=c(ncol(spathial_res$ppath)))
-    for(i in (1:length(correlations))){
-      A <- correlations[[i]]
-      for(j in (1:length(A))){
-        B <- A[[j]]
-        for(k in (1:length(B))){
-          sum[k] <- sum[k] +  B[k]
-        }
-        count <- count + 1
-      }
-    }
-
-    correlations <- sapply(sum, function(x){
-      corr_avg <- x/count
-    })
     correlations <- as.list(correlations)
     names(correlations) <- colnames(spathial_res$ppath)
-    correlations<-unlist(correlations)
+    fisher<-unlist(correlations)
 
     #Mean of ranks
     ranks <- lapply(spathial_res$perturbed_path, function(x){
@@ -503,10 +470,10 @@ spathialStatistics <- function(spathial_res){
           if(sd(z) == 0){
             return(0)
           }else{
-            abs(cor(z, c(1:length(z))))
+            cor(z, c(1:length(z)))
           }
         })
-        return(rank(corr))
+        return(rank(-corr))
       })
     })
 
@@ -524,7 +491,7 @@ spathialStatistics <- function(spathial_res){
     }
 
     ranks <- sapply(sum, function(x){
-      corr_avg <- x/count
+      rank_avg <- x/count
     })
     ranks <- as.list(ranks)
     names(ranks) <- colnames(spathial_res$ppath)
@@ -540,13 +507,12 @@ spathialStatistics <- function(spathial_res){
     })
     correlations<-unlist(correlations)
     names(correlations)<-colnames(spathial_res$ppath)
-    fisher <- correlations
-    ranks <- rank(correlations)
+    ranks <- rank(-correlations)
+    names(ranks)<-colnames(spathial_res$ppath)
   }
 
   outlist<-list(
     correlations=correlations,
-    fisher=fisher,
     ranks=ranks
   )
   return(outlist)
