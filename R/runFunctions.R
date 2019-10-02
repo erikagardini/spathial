@@ -82,7 +82,7 @@ spathialBoundaryIds <- function(X, X_labels, mode = 1, from = NULL, to = NULL){
   }else if(mode == 3){
     if(is.null(from) | is.null(to)){
       stop("You should insert the starting label and the ending label")
-    }else if(!(from %in% rownames(X)) ){
+    }else if(!(from %in% rownames(X))){
       stop("from is not an existing sample")
     }else if(!(to %in% rownames(X))){
       stop("to is not an existing sample")
@@ -517,7 +517,7 @@ spathialStatistics <- function(spathial_res){
       z_avg <- x/count
       return(DescTools::FisherZInv(z_avg))
     })
-    correlations <- as.list(correlations)
+    correlations <- unlist(correlations)
     names(correlations) <- colnames(spathial_res$ppath)
     fisher<-unlist(correlations)
 
@@ -551,10 +551,8 @@ spathialStatistics <- function(spathial_res){
     ranks <- sapply(sum, function(x){
       rank_avg <- x/count
     })
-    ranks <- as.list(ranks)
+    ranks <- unlist(ranks)
     names(ranks) <- colnames(spathial_res$ppath)
-    ranks<-unlist(ranks)
-
   }else{ # When a single path is present
     correlations <- sapply(spathial_res$ppath, function(x){
       if(sd(x) == 0){
