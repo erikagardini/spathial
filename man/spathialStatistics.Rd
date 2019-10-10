@@ -7,16 +7,13 @@
 spathialStatistics(spathial_res)
 }
 \arguments{
-\item{spathial_res}{A list of objects
-\itemize{
-  \item ppath: principal path from the starting point to the ending point
-  \item ppath_perturbed: all the perturbed paths
-}}
+\item{spathial_res:}{principal path from the starting point to the ending point}
 }
 \value{
 A list of objects
 \itemize{
-  \item correlations: Pearson's correlation coefficients between each feature and the path (when ppath_perturbed is not NULL, a Fisher-integrated correlation coefficient is provided)
+  \item correlations: Pearson's correlation coefficients between ea
+  ch feature and the path (when ppath_perturbed is not NULL, a Fisher-integrated correlation coefficient is provided)
   \item ranks: ranks of associations between the n features and the path (when ppath_perturbed is not NULL, the mean of the ranks is provided)
 }
 }
@@ -35,7 +32,7 @@ filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryR
 #Set the number of waypoints
 NC <- 20
 # Run spathialWay with the filtered data
-spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC, neighbors = 1)
-#Run spathialStatistics with spathialRes
-statistics <- spathialStatistics(spathialRes)
+spathial_res <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC)
+#Run spathialStatistics with spathial_res
+statistics <- spathialStatistics(spathial_res)
 }

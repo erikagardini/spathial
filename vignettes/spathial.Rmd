@@ -1,12 +1,12 @@
 ---
 title: "A short introduction to the _spathial_ Package"
-# output: pdf_document
-output: html_document
-#output: rmarkdown::html_vignette
-#vignette: >
-#  %\VignetteIndexEntry{Spathial Package Vignette}
-#  %\VignetteEngine{knitr::rmarkdown}
-#  %\VignetteEncoding{UTF-8}
+#output: pdf_document
+#output: html_document
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Spathial Package Vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 ```{r echo=FALSE}
 knitr::opts_chunk$set(fig.width=7, fig.height=5) 
@@ -99,7 +99,7 @@ boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=3,
 boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
 ```
 
-Once the boundaries are defined, and only in the case of ```mode=2```, the ```X``` and X_labels objects contain extra meta-samples (the boundaries) and need to be updated.
+Once the boundaries are defined, and only in the case of ```mode=2```, the ```X``` and ```X_labels``` objects contain extra meta-samples (the boundaries) and need to be updated.
 ``` {r}
 # Take the output from the variable boundary_init
 boundary_ids<-boundary_init$boundary_ids
@@ -150,7 +150,7 @@ points(X_garbage[,1],X_garbage[,2], col="gray", pch=16)
 ```
 
 ## Step 4: principal path
-The function ```spathialWay``` computes the principal path algorithm and gives as output the principal path points. It takes as input the matrix ```X```, the labels ```X_labels```, the boundaries ```boundary_ids``` and the parameter ```NC```. ```NC``` is the desired number of waypoints of the resulting principal path. For example, given ```NC=10``` the resulting principal path will be composed of 10 waypoints plus the starting and the ending points. 
+The function ```spathialWay``` computes the principal path algorithm and gives as output the principal path points. It takes as input the matrix ```X```, the labels ```X_labels```, the boundaries ```boundary_ids``` and the parameter ```NC```, which is the desired number of waypoints of the resulting principal path. For example, given ```NC=10``` the resulting principal path will be composed of 10 waypoints plus the starting and the ending points. 
 
 The output of the function ```spathialWay``` is the variable ```spathial_res``` , which contains the coordinates of the waypoints of the principal path;   
 

@@ -14,17 +14,13 @@ spathialPlot(X, X_labels, boundary_ids, spathial_res,
 
 \item{boundary_ids}{waypoints}
 
-\item{spathial_res}{A list of objects
-\itemize{
-  \item ppath: principal path from the starting point to the ending point
-  \item ppath_perturbed: all the perturbed paths
-}}
-
 \item{perplexity_value}{the value for TSNE perplexity (default is nrsamples*3/50)}
 
 \item{mask}{the mask of the sample to preserve (when prefiltering is computed)}
 
 \item{...}{Parameters which will be inherited by plot()}
+
+\item{spathial_res:}{principal path from the starting point to the ending point}
 }
 \description{
 Get the 2D coordinates of each waypoint (using t-SNE algorithm for the dimensionality reduction)
@@ -38,9 +34,9 @@ boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
 #Set the number of waypoints
 NC <- 20
 # Run spathialWay without prefiltering
-spathialRes <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC, neighbors = 1)
-#Run spathialPlot with spathialRes
-spathialPlot(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, spathialRes, perplexity_value=30)
+spathial_res <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC)
+#Run spathialPlot with spathial_res
+spathialPlot(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, spathial_res, perplexity_value=30)
 
 #EXAMPLE 2
 # Load data matrix X
@@ -54,7 +50,7 @@ filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryR
 #Set the number of waypoints
 NC <- 20
 # Run spathialWay with the filtered data
-spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC, neighbors = 1)
-#Run spathialPlot with spathialRes
-spathialPlot(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, spathialRes, perplexity_value=30, filterRes$mask)
+spathial_res <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC)
+#Run spathialPlot with spathial_res
+spathialPlot(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, spathial_res, perplexity_value=30, filterRes$mask)
 }

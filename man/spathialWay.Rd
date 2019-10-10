@@ -4,7 +4,7 @@
 \alias{spathialWay}
 \title{Compute Principal Path}
 \usage{
-spathialWay(X, X_labels, boundary_ids, NC = 50, neighbors = 0)
+spathialWay(X, X_labels, boundary_ids, NC = 50)
 }
 \arguments{
 \item{X}{data points}
@@ -14,15 +14,9 @@ spathialWay(X, X_labels, boundary_ids, NC = 50, neighbors = 0)
 \item{boundary_ids}{starting and ending points}
 
 \item{NC}{number of waypoints}
-
-\item{neighbors}{the number of desired nearest neighbours}
 }
 \value{
-A list of objects
-\itemize{
-  \item ppath: spathial waypoints
-  \item ppath_parturbed: all the spathial waypoints for each perturbation
-}
+spathial_res: spathial waypoints
 }
 \description{
 Get the coordinates of the waypoints of the principal path
@@ -38,8 +32,8 @@ boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
 #Set the number of waypoints
 NC <- 20
 # Run spathialWay without prefilterint
-spathialRes <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC, neighbors = 1)
-spathialRes
+spathial_res <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC)
+spathial_res
 
 #EXAMPLE 2
 # Load data matrix X
@@ -53,6 +47,6 @@ filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryR
 #Set the number of waypoints
 NC <- 20
 # Run spathialWay with the filtered data
-spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC, neighbors = 1)
-spathialRes
+spathial_res <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC)
+spathial_res
 }

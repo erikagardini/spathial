@@ -10,13 +10,13 @@ compute_spathial <- function(X, boundary_ids, NC){
   s_span<-c(s_span,0)
 
   models<-list()
-   pb <- txtProgressBar(min = 0, max = length(s_span), style = 3)
+   pb <- utils::txtProgressBar(min = 0, max = length(s_span), style = 3)
    for(i in 1:length(s_span)){
      s<-s_span[i]
      W<-rkm(X,init_W,s,plot_ax=FALSE)
      init_W<-W
      models[[as.character(s)]]<-W
-     setTxtProgressBar(pb, i)
+     utils::setTxtProgressBar(pb, i)
    }
   close(pb)
 

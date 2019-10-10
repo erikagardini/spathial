@@ -34,7 +34,7 @@ spathialBoundaryIds <- function(X, X_labels, mode = 1, from = NULL, to = NULL){
       colors <- rainbow(length(table(X_labels)))
       colors_labels <- sapply(X_labels, function(x){colors[x]})
 
-      plot(X[,1],X[,2], col=color_labels, pch=as.character(X_labels), main="Click to select path start and end points")
+      plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels), main="Click to select path start and end points")
       boundary_ids<-rownames(X)[identify(X,n=2,plot=FALSE)]
       points(
         X[which(rownames(X) == boundary_ids[1]),1], X[which(rownames(X) == boundary_ids[1]),2],pch="x",col="black",cex=4,
@@ -143,7 +143,7 @@ spathialPrefiltering <- function(X, X_labels, boundary_ids){
 #' @param X_labels labels of the data points
 #' @param boundary_ids starting and ending points
 #' @param NC number of waypoints
-#' @return ppath: spathial waypoints
+#' @return spathial_res: spathial waypoints
 #' @examples
 #' #EXAMPLE 1
 #' # Load data matrix X
@@ -155,8 +155,8 @@ spathialPrefiltering <- function(X, X_labels, boundary_ids){
 #' #Set the number of waypoints
 #' NC <- 20
 #' # Run spathialWay without prefilterint
-#' spathialRes <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC)
-#' spathialRes
+#' spathial_res <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC)
+#' spathial_res
 #'
 #' #EXAMPLE 2
 #' # Load data matrix X
@@ -170,14 +170,14 @@ spathialPrefiltering <- function(X, X_labels, boundary_ids){
 #' #Set the number of waypoints
 #' NC <- 20
 #' # Run spathialWay with the filtered data
-#' spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC)
-#' spathialRes
+#' spathial_res <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC)
+#' spathial_res
 #' @export
 spathialWay <- function(X, X_labels, boundary_ids, NC=50){
-  ppath <- compute_spathial(X, boundary_ids, NC)
-  colnames(ppath) <- colnames(X)
+  spathial_res <- compute_spathial(X, boundary_ids, NC)
+  colnames(spathial_res) <- colnames(X)
 
-  return(ppath)
+  return(spathial_res)
 }
 
 #' Find labels
@@ -186,7 +186,7 @@ spathialWay <- function(X, X_labels, boundary_ids, NC=50){
 #'
 #' @param X data points
 #' @param X_labels labels of the data points
-#' @param ppath: principal path from the starting point to the ending point
+#' @param spathial_res: principal path from the starting point to the ending point
 #' @return ppath_labels: labels of the waypoints
 #' @examples
 #' #EXAMPLE 1
@@ -199,9 +199,9 @@ spathialWay <- function(X, X_labels, boundary_ids, NC=50){
 #' #Set the number of waypoints
 #' NC <- 20
 #' # Run spathialWay without prefiltering
-#' spathialRes <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC)
-#' #Run spathialLabels with spathialRes
-#' labels <- spathialLabels(boundaryRes$X, boundaryRes$X_labels, spathialRes)
+#' spathial_res <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC)
+#' #Run spathialLabels with spathial_res
+#' labels <- spathialLabels(boundaryRes$X, boundaryRes$X_labels, spathial_res)
 #' labels
 #'
 #' #EXAMPLE 2
@@ -216,16 +216,15 @@ spathialWay <- function(X, X_labels, boundary_ids, NC=50){
 #' #Set the number of waypoints
 #' NC <- 20
 #' # Run spathialWay with the filtered data
-#' spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC)
-#' #Run spathialLabels with spathialRes
-#' labels <- spathialLabels(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], spathialRes)
+#' spathial_res <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC)
+#' #Run spathialLabels with spathial_res
+#' labels <- spathialLabels(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], spathial_res)
 #' labels
 #' @export
 spathialLabels <- function(X, X_labels, spathial_res){
-  ppath <- spathial_res$ppath
   X_labels <- X_labels[which(! grepl("Centroid", rownames(X)))]
   X <- X[which(! grepl("Centroid", rownames(X))),]
-  ppath_no_centroids <- ppath[2:(nrow(ppath)-1), ]
+  ppath_no_centroids <- spathial_res[2:(nrow(spathial_res)-1), ]
   ppath_labels <- class::knn(X, ppath_no_centroids, cl=X_labels, k=1)
   return(ppath_labels)
 }
@@ -237,7 +236,7 @@ spathialLabels <- function(X, X_labels, spathial_res){
 #' @param X data points
 #' @param X_labels labels of the data points
 #' @param boundary_ids waypoints
-#' @param ppath: principal path from the starting point to the ending point
+#' @param spathial_res: principal path from the starting point to the ending point
 #' @param perplexity_value the value for TSNE perplexity (default is nrsamples*3/50)
 #' @param mask the mask of the sample to preserve (when prefiltering is computed)
 #' @param ... Parameters which will be inherited by plot()
@@ -251,9 +250,9 @@ spathialLabels <- function(X, X_labels, spathial_res){
 #' #Set the number of waypoints
 #' NC <- 20
 #' # Run spathialWay without prefiltering
-#' spathialRes <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC)
-#' #Run spathialPlot with spathialRes
-#' spathialPlot(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, spathialRes, perplexity_value=30)
+#' spathial_res <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC)
+#' #Run spathialPlot with spathial_res
+#' spathialPlot(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, spathial_res, perplexity_value=30)
 #'
 #' #EXAMPLE 2
 #' # Load data matrix X
@@ -267,22 +266,20 @@ spathialLabels <- function(X, X_labels, spathial_res){
 #' #Set the number of waypoints
 #' NC <- 20
 #' # Run spathialWay with the filtered data
-#' spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC)
-#' #Run spathialPlot with spathialRes
-#' spathialPlot(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, spathialRes, perplexity_value=30, filterRes$mask)
+#' spathial_res <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC)
+#' #Run spathialPlot with spathial_res
+#' spathialPlot(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, spathial_res, perplexity_value=30, filterRes$mask)
 #' @export
 spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_value=NULL, mask=NULL, ...){
   set.seed(1)
   if(ncol(X) == 2){
-    ppath <- spathial_res$ppath
-
     colors <- rainbow(length(table(X_labels)))
     colors_labels <- sapply(X_labels, function(x){colors[x]})
     boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
 
-    plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels),...)
+    plot(X[,1],X[,2], col=colors_labels, xlab="tsne1", ylab="tsne2", ypch=as.character(X_labels),...)
     points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
-    lines(ppath[,1], ppath[,2],lwd=3,col="red",type="o",pch=15)
+    lines(spathial_res[,1], spathial_res[,2],lwd=3,col="red",type="o",pch=15)
     if(!is.null(mask)){
       X_garbage <- X[!mask,]
       X_labels_garbage <- X_labels[!mask]
@@ -293,12 +290,10 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
       perplexity_value<-ceiling(nrow(X)*3/50)
       #message("Perplexity is ",perplexity_value)
     }
-    ppath <- spathial_res$ppath
-    #ppath <- ppath[2:(nrow(ppath)-1),]
-    rownames(ppath) <- paste("ppath",1:nrow(ppath))
-    ppath_labels <- array(data = -1, dim=(nrow(ppath)))
+    rownames(spathial_res) <- paste("ppath",1:nrow(spathial_res))
+    ppath_labels <- array(data = -1, dim=(nrow(spathial_res)))
     total_labels <- c(X_labels, ppath_labels)
-    all_points <- rbind(X, ppath)
+    all_points <- rbind(X, spathial_res)
 
     tsne_res <- Rtsne::Rtsne(as.matrix(all_points), dims = 2, perplexity = perplexity_value, check_duplicates=FALSE)
     points_2D <- tsne_res$Y
@@ -318,7 +313,7 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
     colors <- rainbow(length(table(X_labels)))
     colors_labels <- sapply(X_labels, function(x){colors[x]})
 
-    plot(points_2D[,1],points_2D[,2], col=colors_labels, pch=as.character(X_labels),...)
+    plot(points_2D[,1],points_2D[,2], xlab="tsne1", ylab="tsne2", col=colors_labels, pch=as.character(X_labels),...)
     points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="black",cex=4)
     lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch=15)
     if(!is.null(mask)){
@@ -331,10 +326,11 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
 #'
 #' Get how much the features correlate with the path
 #'
-#' @param ppath: principal path from the starting point to the ending point
+#' @param spathial_res: principal path from the starting point to the ending point
 #' @return A list of objects
 #' \itemize{
-#'   \item correlations: Pearson's correlation coefficients between each feature and the path (when ppath_perturbed is not NULL, a Fisher-integrated correlation coefficient is provided)
+#'   \item correlations: Pearson's correlation coefficients between ea
+#'   ch feature and the path (when ppath_perturbed is not NULL, a Fisher-integrated correlation coefficient is provided)
 #'   \item ranks: ranks of associations between the n features and the path (when ppath_perturbed is not NULL, the mean of the ranks is provided)
 #'}
 #' @examples
@@ -349,12 +345,12 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
 #' #Set the number of waypoints
 #' NC <- 20
 #' # Run spathialWay with the filtered data
-#' spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC)
-#' #Run spathialStatistics with spathialRes
-#' statistics <- spathialStatistics(spathialRes)
+#' spathial_res <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC)
+#' #Run spathialStatistics with spathial_res
+#' statistics <- spathialStatistics(spathial_res)
 #' @export
 spathialStatistics <- function(spathial_res){
-  correlations <- sapply(spathial_res$ppath, function(x){
+  correlations <- sapply(spathial_res, function(x){
     if(sd(x) == 0){
       return(0)
     }else{
@@ -362,9 +358,9 @@ spathialStatistics <- function(spathial_res){
     }
   })
   correlations<-unlist(correlations)
-  names(correlations)<-colnames(spathial_res$ppath)
+  names(correlations)<-colnames(spathial_res)
   ranks <- rank(-correlations)
-  names(ranks)<-colnames(spathial_res$ppath)
+  names(ranks)<-colnames(spathial_res)
 
   outlist<-list(
     correlations=correlations,

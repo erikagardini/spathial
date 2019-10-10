@@ -11,14 +11,10 @@ spathialLabels(X, X_labels, spathial_res)
 
 \item{X_labels}{labels of the data points}
 
-\item{spathial_res}{A list of objects
-\itemize{
-  \item ppath: principal path from the starting point to the ending point
-  \item ppath_perturbed: all the perturbed paths
-}}
+\item{spathial_res:}{principal path from the starting point to the ending point}
 }
 \value{
-ppath_labels - labels of the waypoints
+ppath_labels: labels of the waypoints
 }
 \description{
 Get the label of each waypoint accordin to the neighbourhood
@@ -34,9 +30,9 @@ boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
 #Set the number of waypoints
 NC <- 20
 # Run spathialWay without prefiltering
-spathialRes <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC, neighbors = 1)
-#Run spathialLabels with spathialRes
-labels <- spathialLabels(boundaryRes$X, boundaryRes$X_labels, spathialRes)
+spathial_res <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC)
+#Run spathialLabels with spathial_res
+labels <- spathialLabels(boundaryRes$X, boundaryRes$X_labels, spathial_res)
 labels
 
 #EXAMPLE 2
@@ -51,8 +47,8 @@ filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryR
 #Set the number of waypoints
 NC <- 20
 # Run spathialWay with the filtered data
-spathialRes <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC, neighbors = 1)
-#Run spathialLabels with spathialRes
-labels <- spathialLabels(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], spathialRes)
+spathial_res <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC)
+#Run spathialLabels with spathial_res
+labels <- spathialLabels(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], spathial_res)
 labels
 }
