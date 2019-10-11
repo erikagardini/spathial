@@ -30,6 +30,9 @@ load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
 load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
 # Run spathialBoundary
 boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+X <- boundaryRes$X
+X_labels <- boundaryRes$X_labels
+boundary_ids <- boundaryRes$boundary_ids
 # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
-filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids)
+filterRes <- spathialPrefiltering(X, X_labels, boundary_ids)
 }

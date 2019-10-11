@@ -185,15 +185,12 @@ The following code chuncks show hot to use the function ```spathialPlot``` with 
 par(mfrow=c(2,1))
 # Plot principal path with prefiltering - provide a mask
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res_with_filtering,
-                       perplexity_value=30, mask=mask,
-                       xlab=colnames(X)[1],ylab=colnames(X)[2],
-                       main="Principal path with prefiltering"
+                       perplexity_value=30, mask=mask, main="Principal path with prefiltering"
 )
 
 # Plot principal path without prefiltering - mask NULL
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res_without_filtering,
                        perplexity_value=30,
-                       xlab=colnames(X)[1],ylab=colnames(X)[2],
                        main="Principal path without prefiltering"
 )
 ```
@@ -292,8 +289,7 @@ In order to visualize the multi-dimensional dataset on two dimensions, we perfor
 ```{r fig.cap="_Principal Path across the TCGA Liver Cancer dataset_"}
 # Plot the path in 2D using Rtsne
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res,
-                       perplexity_value=30,
-                       xlab="TSNE1",ylab="TSNE2")
+                       perplexity_value=30)
 
 ```
 

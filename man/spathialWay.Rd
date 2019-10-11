@@ -29,10 +29,13 @@ load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
 load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
 # Run spathialBoundary
 boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+X <- boundaryRes$X
+X_labels <- boundaryRes$X_labels
+boundary_ids <- boundaryRes$boundary_ids
 #Set the number of waypoints
 NC <- 20
 # Run spathialWay without prefilterint
-spathial_res <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC)
+spathial_res <- spathialWay(X, X_labels, boundary_ids, NC)
 spathial_res
 
 #EXAMPLE 2
@@ -42,11 +45,16 @@ load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
 load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
 # Run spathialBoundary
 boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+X <- boundaryRes$X
+X_labels <- boundaryRes$X_labels
+boundary_ids <- boundaryRes$boundary_ids
 # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
-filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids)
+filterRes <- spathialPrefiltering(X, X_labels, boundary_ids)
 #Set the number of waypoints
 NC <- 20
 # Run spathialWay with the filtered data
-spathial_res <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC)
+mask <- filterRes$mask
+boundary_ids <- filterRes$boundary_ids
+spathial_res <- spathialWay(X[mask,], X_labels[mask], boundary_ids, NC)
 spathial_res
 }

@@ -70,7 +70,7 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
     it<-it+1
 
     # Compute Cardinality
-    W_card<-setNames(rep(0,NC+2),rownames(init_W))
+    W_card<-stats::setNames(rep(0,NC+2),rownames(init_W))
     tu<-table(u)
     W_card[names(tu)]<-tu
 
@@ -123,7 +123,7 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1){
   # Pick Nf medoids with k-means++ and compute pairwise distance matrix
   med_ids<-initMedoids(X,n,init_type="kpp",boundary_ids)
   med_ids<-c(boundary_ids[1],med_ids,boundary_ids[2])
-  medmed_dst<-as.matrix(dist(X[med_ids,],method="euclidean"))^2
+  medmed_dst<-as.matrix(stats::dist(X[med_ids,],method="euclidean"))^2
 
   # Build k-nearest-neighbor penalized matrix
   knn_ids<-t(apply(medmed_dst,1,order))
@@ -161,7 +161,7 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1){
 
   # Select minimum distance medoids
   u<-colnames(Xmed_dst)[apply(Xmed_dst,1,which.min)]
-  filter_mask<-setNames(rep(FALSE,N),rownames(X))
+  filter_mask<-stats::setNames(rep(FALSE,N),rownames(X))
   filter_mask[u%in%path]<-TRUE
 
   boundary_ids_filtered<-boundary_ids

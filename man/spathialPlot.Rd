@@ -14,13 +14,13 @@ spathialPlot(X, X_labels, boundary_ids, spathial_res,
 
 \item{boundary_ids}{waypoints}
 
+\item{spathial_res}{principal path from the starting point to the ending point}
+
 \item{perplexity_value}{the value for TSNE perplexity (default is nrsamples*3/50)}
 
 \item{mask}{the mask of the sample to preserve (when prefiltering is computed)}
 
 \item{...}{Parameters which will be inherited by plot()}
-
-\item{spathial_res:}{principal path from the starting point to the ending point}
 }
 \description{
 Get the 2D coordinates of each waypoint (using t-SNE algorithm for the dimensionality reduction)
@@ -31,12 +31,15 @@ load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
 load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
 # Run spathialBoundary
 boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+X <- boundaryRes$X
+X_labels <- boundaryRes$X_labels
+boundary_ids <- boundaryRes$boundary_ids
 #Set the number of waypoints
 NC <- 20
 # Run spathialWay without prefiltering
-spathial_res <- spathialWay(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, NC)
+spathial_res <- spathialWay(X, X_labels, boundary_ids, NC)
 #Run spathialPlot with spathial_res
-spathialPlot(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, spathial_res, perplexity_value=30)
+spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value=30)
 
 #EXAMPLE 2
 # Load data matrix X
@@ -45,12 +48,17 @@ load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
 load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
 # Run spathialBoundary
 boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+X <- boundaryRes$X
+X_labels <- boundaryRes$X_labels
+boundary_ids <- boundaryRes$boundary_ids
 # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
-filterRes <- spathialPrefiltering(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids)
+filterRes <- spathialPrefiltering(X, X_labels, boundary_ids)
 #Set the number of waypoints
 NC <- 20
 # Run spathialWay with the filtered data
-spathial_res <- spathialWay(boundaryRes$X[filterRes$mask,], boundaryRes$X_labels[filterRes$mask], filterRes$boundary_ids, NC)
+mask <- filterRes$mask
+boundary_ids <- filterRes$boundary_ids
+spathial_res <- spathialWay(X[mask,], X_labels[mask], boundary_ids, NC)
 #Run spathialPlot with spathial_res
-spathialPlot(boundaryRes$X, boundaryRes$X_labels, boundaryRes$boundary_ids, spathial_res, perplexity_value=30, filterRes$mask)
+spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value=30, mask)
 }
