@@ -304,7 +304,7 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
     colors_labels <- sapply(X_labels, function(x){colors[x]})
     boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
 
-    graphics::plot(X[,1],X[,2], col=colors_labels, xlab="tsne1", ylab="tsne2", ypch=as.character(X_labels),...)
+    graphics::plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels), xlab=colnames(X)[1], ylab=colnames(X)[1],...)
     graphics::points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
     graphics::lines(spathial_res[,1], spathial_res[,2],lwd=3,col="red",type="o",pch=15)
     if(!is.null(mask)){

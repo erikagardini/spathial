@@ -23,7 +23,6 @@ Imports:
     matrixStats,
     MASS,
     Rtsne,
-    DescTools,
     class,
     utils,
     knitr,
