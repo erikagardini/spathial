@@ -26,40 +26,52 @@
 #' # Run spathialBoundary
 #' boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
 #' @export
-spathialBoundaryIds <- function(X, X_labels, mode = 1, from = NULL, to = NULL){
+spathialBoundaryIds <- function(X, X_labels = NULL, mode = 1, from = NULL, to = NULL){
+  if(is.null(X_labels)){
+    if(mode == 2){
+      stop("With X_labels == NULL, only mode 1 or 3 is allowed")
+    }else{
+      X_labels_or <- NULL
+      X_labels <- rep(1, length=nrow(X))
+      colors <- "blue"
+      pch_val <- 16
+    }
+  }else{
+    if(!is.numeric(X_labels) || !all(X_labels > 0)){
+      stop("Labels must be integer numbers ranging from 1 to the n-th category.")
+    }else{
+      X_labels_or <- X_labels
+      colors <- grDevices::rainbow(length(table(X_labels)))
+      pch_val <- as.character(X_labels)
+    }
+  }
   if(mode == 1){
     if(ncol(X) < 2){
       stop("X should have at least 2 columns")
     }else if(ncol(X) == 2){
-      colors <- grDevices::rainbow(length(table(X_labels)))
       colors_labels <- sapply(X_labels, function(x){colors[x]})
-
-      graphics::plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels), main="Click to select path start and end points")
+      graphics::plot(X[,1],X[,2], col=colors_labels, pch=pch_val, xlab=colnames(X)[1], ylab=colnames(X)[2], main="Click to select path start and end points")
       boundary_ids<-rownames(X)[graphics::identify(X,n=2,plot=FALSE)]
       graphics::points(
-        X[which(rownames(X) == boundary_ids[1]),1], X[which(rownames(X) == boundary_ids[1]),2],pch="x",col="black",cex=4,
-        xlab=colnames(X)[1],ylab=colnames(X)[2]
+        X[which(rownames(X) == boundary_ids[1]),1], X[which(rownames(X) == boundary_ids[1]),2],pch="x",col="black",cex=4
       )
       graphics::points(
-        X[which(rownames(X) == boundary_ids[2]),1], X[which(rownames(X) == boundary_ids[2]),2],pch="x",col="black",cex=4,
-        xlab=colnames(X)[1],ylab=colnames(X)[2]
+        X[which(rownames(X) == boundary_ids[2]),1], X[which(rownames(X) == boundary_ids[2]),2],pch="x",col="black",cex=4
       )
     }else{
       tsne_res <- Rtsne::Rtsne(X, dims = 2, perplexity = 30)
       X_2D <- tsne_res$Y
 
-      colors <- grDevices::rainbow(length(table(X_labels)))
+      #colors <- grDevices::rainbow(length(table(X_labels)))
       colors_labels <- sapply(X_labels, function(x){colors[x]})
 
-      graphics::plot(X_2D[,1],X_2D[,2], col=colors_labels, pch=as.character(X_labels), main="Click to select path start and end points")
+      graphics::plot(X_2D[,1],X_2D[,2], col=colors_labels, pch=pch_val, xlab="tne1",ylab="tne2", main="Click to select path start and end points")
       boundary_ids<-rownames(X)[graphics::identify(X_2D,n=2,plot=FALSE)]
       graphics::points(
-        X_2D[which(rownames(X) == boundary_ids[1]),1], X_2D[which(rownames(X) == boundary_ids[1]),2],pch="x",col="black",cex=4,
-        xlab="tne1",ylab="tne2"
+        X_2D[which(rownames(X) == boundary_ids[1]),1], X_2D[which(rownames(X) == boundary_ids[1]),2],pch="x",col="black",cex=4
       )
       graphics::points(
-        X_2D[which(rownames(X) == boundary_ids[2]),1], X_2D[which(rownames(X) == boundary_ids[2]),2],pch="x",col="black",cex=4,
-        xlab="tne1",ylab="tne2"
+        X_2D[which(rownames(X) == boundary_ids[2]),1], X_2D[which(rownames(X) == boundary_ids[2]),2],pch="x",col="black",cex=4
       )
     }
   }else if(mode == 2){
@@ -95,6 +107,10 @@ spathialBoundaryIds <- function(X, X_labels, mode = 1, from = NULL, to = NULL){
     stop("Insert a valid mode")
   }
 
+  if(is.null(X_labels_or)){
+    X_labels <- NULL
+  }
+
   outlist<-list(
     X=X,
     X_labels=X_labels,
@@ -108,7 +124,6 @@ spathialBoundaryIds <- function(X, X_labels, mode = 1, from = NULL, to = NULL){
 #' Regularized K-means for principal path: prefiltering
 #'
 #' @param X data points
-#' @param X_labels labels of the data points
 #' @param boundary_ids names of the start and ending points, to be treated separately
 #' @return A list of objects
 #' \itemize{
@@ -126,9 +141,9 @@ spathialBoundaryIds <- function(X, X_labels, mode = 1, from = NULL, to = NULL){
 #' X_labels <- boundaryRes$X_labels
 #' boundary_ids <- boundaryRes$boundary_ids
 #' # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
-#' filterRes <- spathialPrefiltering(X, X_labels, boundary_ids)
+#' filterRes <- spathialPrefiltering(X, boundary_ids)
 #' @export
-spathialPrefiltering <- function(X, X_labels, boundary_ids){
+spathialPrefiltering <- function(X, boundary_ids){
   prefiltered<-rkm_prefilter(X, boundary_ids)
 
   outlist<-list(
@@ -143,7 +158,6 @@ spathialPrefiltering <- function(X, X_labels, boundary_ids){
 #' Get the coordinates of the waypoints of the principal path
 #'
 #' @param X data points
-#' @param X_labels labels of the data points
 #' @param boundary_ids starting and ending points
 #' @param NC number of waypoints
 #' @return spathial_res: spathial waypoints
@@ -161,7 +175,7 @@ spathialPrefiltering <- function(X, X_labels, boundary_ids){
 #' #Set the number of waypoints
 #' NC <- 20
 #' # Run spathialWay without prefilterint
-#' spathial_res <- spathialWay(X, X_labels, boundary_ids, NC)
+#' spathial_res <- spathialWay(X, boundary_ids, NC)
 #' spathial_res
 #'
 #' #EXAMPLE 2
@@ -174,17 +188,17 @@ spathialPrefiltering <- function(X, X_labels, boundary_ids){
 #' X <- boundaryRes$X
 #' X_labels <- boundaryRes$X_labels
 #' boundary_ids <- boundaryRes$boundary_ids
-#' # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
-#' filterRes <- spathialPrefiltering(X, X_labels, boundary_ids)
+#' # Run spathial spathialPrefiltering with the output of the function spathialBoundaryIds
+#' filterRes <- spathialPrefiltering(X, boundary_ids)
 #' #Set the number of waypoints
 #' NC <- 20
 #' # Run spathialWay with the filtered data
 #' mask <- filterRes$mask
 #' boundary_ids <- filterRes$boundary_ids
-#' spathial_res <- spathialWay(X[mask,], X_labels[mask], boundary_ids, NC)
+#' spathial_res <- spathialWay(X[mask,], boundary_ids, NC)
 #' spathial_res
 #' @export
-spathialWay <- function(X, X_labels, boundary_ids, NC=50){
+spathialWay <- function(X, boundary_ids, NC=50){
   spathial_res <- compute_spathial(X, boundary_ids, NC)
   colnames(spathial_res) <- colnames(X)
 
@@ -213,7 +227,7 @@ spathialWay <- function(X, X_labels, boundary_ids, NC=50){
 #' #Set the number of waypoints
 #' NC <- 20
 #' # Run spathialWay without prefiltering
-#' spathial_res <- spathialWay(X, X_labels, boundary_ids, NC)
+#' spathial_res <- spathialWay(X, boundary_ids, NC)
 #' #Run spathialLabels with spathial_res
 #' labels <- spathialLabels(X, X_labels, spathial_res)
 #' labels
@@ -229,23 +243,27 @@ spathialWay <- function(X, X_labels, boundary_ids, NC=50){
 #' X_labels <- boundaryRes$X_labels
 #' boundary_ids <- boundaryRes$boundary_ids
 #' # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
-#' filterRes <- spathialPrefiltering(X, X_labels, boundary_ids)
+#' filterRes <- spathialPrefiltering(X, boundary_ids)
 #' #Set the number of waypoints
 #' NC <- 20
 #' # Run spathialWay with the filtered data
 #' mask <- filterRes$mask
 #' boundary_ids <- filterRes$boundary_ids
-#' spathial_res <- spathialWay(X[mask,], X_labels[mask], boundary_ids, NC)
+#' spathial_res <- spathialWay(X[mask,], boundary_ids, NC)
 #' #Run spathialLabels with spathial_res
 #' labels <- spathialLabels(X[mask,], X_labels[mask], spathial_res)
 #' labels
 #' @export
 spathialLabels <- function(X, X_labels, spathial_res){
-  X_labels <- X_labels[which(! grepl("Centroid", rownames(X)))]
-  X <- X[which(! grepl("Centroid", rownames(X))),]
-  ppath_no_centroids <- spathial_res[2:(nrow(spathial_res)-1), ]
-  ppath_labels <- class::knn(X, ppath_no_centroids, cl=X_labels, k=1)
-  return(ppath_labels)
+  if(is.null(X_labels)){
+    stop("You cannot compute spathialLabels with X_labels == NULL")
+  }else{
+    X_labels <- X_labels[which(! grepl("Centroid", rownames(X)))]
+    X <- X[which(! grepl("Centroid", rownames(X))),]
+    ppath_no_centroids <- spathial_res[2:(nrow(spathial_res)-1), ]
+    ppath_labels <- class::knn(X, ppath_no_centroids, cl=X_labels, k=1)
+    return(ppath_labels)
+  }
 }
 
 #' 2D spathial
@@ -272,7 +290,7 @@ spathialLabels <- function(X, X_labels, spathial_res){
 #' #Set the number of waypoints
 #' NC <- 20
 #' # Run spathialWay without prefiltering
-#' spathial_res <- spathialWay(X, X_labels, boundary_ids, NC)
+#' spathial_res <- spathialWay(X, boundary_ids, NC)
 #' #Run spathialPlot with spathial_res
 #' spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value=30)
 #'
@@ -287,24 +305,35 @@ spathialLabels <- function(X, X_labels, spathial_res){
 #' X_labels <- boundaryRes$X_labels
 #' boundary_ids <- boundaryRes$boundary_ids
 #' # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
-#' filterRes <- spathialPrefiltering(X, X_labels, boundary_ids)
+#' filterRes <- spathialPrefiltering(X, boundary_ids)
 #' #Set the number of waypoints
 #' NC <- 20
 #' # Run spathialWay with the filtered data
 #' mask <- filterRes$mask
 #' boundary_ids <- filterRes$boundary_ids
-#' spathial_res <- spathialWay(X[mask,], X_labels[mask], boundary_ids, NC)
+#' spathial_res <- spathialWay(X[mask,], boundary_ids, NC)
 #' #Run spathialPlot with spathial_res
 #' spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value=30, mask)
 #' @export
 spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_value=NULL, mask=NULL, ...){
-  set.seed(1)
+  set.seed(123)
+  if(is.null(X_labels)){
+    X_labels <- rep(1, length=nrow(X))
+    colors <- "blue"
+    pch_val <- 16
+  }else{
+    if(!is.numeric(X_labels) || !all(X_labels > 0)){
+      stop("Labels must be integer numbers ranging from 1 to the n-th category.")
+    }else{
+      colors <- grDevices::rainbow(length(table(X_labels)))
+      pch_val <- as.character(X_labels)
+    }
+  }
   if(ncol(X) == 2){
-    colors <- grDevices::rainbow(length(table(X_labels)))
     colors_labels <- sapply(X_labels, function(x){colors[x]})
     boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
 
-    graphics::plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels), xlab=colnames(X)[1], ylab=colnames(X)[1],...)
+    graphics::plot(X[,1],X[,2], col=colors_labels, pch=pch_val, xlab=colnames(X)[1], ylab=colnames(X)[1],...)
     graphics::points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
     graphics::lines(spathial_res[,1], spathial_res[,2],lwd=3,col="red",type="o",pch=15)
     if(!is.null(mask)){
@@ -337,10 +366,9 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
       X_labels <- X_labels[mask]
     }
 
-    colors <- grDevices::rainbow(length(table(X_labels)))
     colors_labels <- sapply(X_labels, function(x){colors[x]})
 
-    graphics::plot(points_2D[,1],points_2D[,2], xlab="tsne1", ylab="tsne2", col=colors_labels, pch=as.character(X_labels),...)
+    graphics::plot(points_2D[,1],points_2D[,2], xlab="tsne1", ylab="tsne2", col=colors_labels, pch=pch_val,...)
     graphics::points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="black",cex=4)
     graphics::lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch=15)
     if(!is.null(mask)){
@@ -373,13 +401,13 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
 #' X_labels <- boundaryRes$X_labels
 #' boundary_ids <- boundaryRes$boundary_ids
 #' # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
-#' filterRes <- spathialPrefiltering(X, X_labels, boundary_ids)
+#' filterRes <- spathialPrefiltering(X, boundary_ids)
 #' #Set the number of waypoints
 #' NC <- 20
 #' # Run spathialWay with the filtered data
 #' mask <- filterRes$mask
 #' boundary_ids <- filterRes$boundary_ids
-#' spathial_res <- spathialWay(X[mask,], X_labels[mask], boundary_ids, NC)
+#' spathial_res <- spathialWay(X[mask,], boundary_ids, NC)
 #' #Run spathialStatistics with spathial_res
 #' statistics <- spathialStatistics(spathial_res)
 #' @export

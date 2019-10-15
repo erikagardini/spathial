@@ -4,12 +4,10 @@
 \alias{spathialPrefiltering}
 \title{Prefilter data}
 \usage{
-spathialPrefiltering(X, X_labels, boundary_ids)
+spathialPrefiltering(X, boundary_ids)
 }
 \arguments{
 \item{X}{data points}
-
-\item{X_labels}{labels of the data points}
 
 \item{boundary_ids}{names of the start and ending points, to be treated separately}
 }
@@ -34,5 +32,5 @@ X <- boundaryRes$X
 X_labels <- boundaryRes$X_labels
 boundary_ids <- boundaryRes$boundary_ids
 # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
-filterRes <- spathialPrefiltering(X, X_labels, boundary_ids)
+filterRes <- spathialPrefiltering(X, boundary_ids)
 }

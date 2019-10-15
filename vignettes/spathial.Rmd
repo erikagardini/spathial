@@ -12,23 +12,27 @@ vignette: >
 knitr::opts_chunk$set(fig.width=7, fig.height=5) 
 ```
 
-The _spathial_ package contains function to create a path able to navigate a n-dimensional space.
+The _spathial_ package contains functions to create a path able to navigate a n-dimensional space.
 
 # Quick start
-In this section we show the most basic steps to compute the _spathial_ implementation of the principal path [1], through a simple 2-dimensional example.
+In this section the most basic steps to run the _spathial_ implementation of the principal path algorithm [1] are shown, through a simple 2d example.
 
-Let's start installing spathial to ensure that all the needed packages are installed.
+The very first step is the spathial package installation
 ```{r eval=FALSE}
 install.packages("spathial")
 ```
 
-And then we load the package:
+And its loading:
 ```{r}
 library("spathial")
 ```
 
 ## Step 1: load data
-To compute the principal path we assume that you have an input matrix ```X```. Each column of the matrix ```X``` is a feature (e.g. a gene) and each row has a univocal name (e.g. a sample). We also assume that you have an input vector ```X_labels``` which contains for each row of ```X``` a description label (e.g. the sample category). Labels must be integer numbers ranging from 1 to the n-th category. For the sake of simplicity, we provide a simple .csv file with 900 samples and 3 columns (2 + labels). The following code chunck shows how to load the .csv and how to format the data.
+To compute the principal path one assumes that to have an input matrix ```X```. 
+Each column of the matrix ```X``` is a feature (e.g. a gene) and each row has a univocal name (e.g. a sample). 
+For a supervised solution, one also assumes that the input vector ```X_labels``` is present which contains for each row of ```X``` a description label (e.g. the sample category). Labels must be integer numbers ranging from 1 to the n-th category. Otherwise, the unsupervised solution can be obtained with ```X_labels = NULL```.
+For the sake of simplicity, a simple .csv file with 900 samples and 
+3 columns (2 + labels) is provided. The following code snippet shows how to load the .csv and how to properly format the data.
 
 ```{r}
 # Load the dataset with 900 samples
@@ -50,13 +54,13 @@ This is how the data matrix ```X``` should look like at this point
 head(X)
 ```
 
-The sample labels vector ```X_labels```, assigning categories to each sample,
-according to the order in ```X``` rows
+The sample labels vector ```X_labels```, assigns categories to each sample,
+coherently with rows order in ```X``` 
 ```{r}
 head(X_labels)
 ```
 
-The following code chunk shows how to plot the datapoints colored according to ```X_labels```:
+The following code snippet shows how to plot the data points colored according to ```X_labels```:
 
 ```{r fig.cap="_Quick Start example dataset_"}
 # Plot the results
@@ -67,12 +71,15 @@ plot(X[,1],X[,2],col=colors_labels,pch=as.character(X_labels),
 ```
 
 ## Step 2: select the boundaries
-The fist step to compute the principal path consists in selecting the starting and the ending points. The package spathial gives you the function ```spathialBoundaryIds``` which takes as input the matrix ```X```, the corresponding labels ```X_labels``` and the parameters ```mode```, ```from``` and ```to```.
+The fist step to compute the principal path consists in selecting the starting and the ending points. 
+The package spathial has the function ```spathialBoundaryIds``` which takes as input the matrix ```X```, 
+the corresponding labels ```X_labels``` (or NULL) and the parameters ```mode```, ```from``` and ```to```.
 
-The parameter ```mode``` has to assume one the following values:
+The parameter ```mode``` can assume of one the following values:
 
-* __1__ _(default)_: the user can choose the starting and the ending points directly from the 2D representations of the data points. In this case the values of the parameters ```from``` and ```to``` are not considered.
-* __2__: the starting point is the centroid of all the data points labelled as the parameter ```from```, while the ending point is the centroid of all the data points labelled as the parameter ```to```.
+* __1__ _(default)_: the user can choose the starting and the ending points directly from the 2D representations of the data points. 
+In this case the values of the parameters ```from``` and ```to``` are not considered.
+* __2__: the starting point is the centroid of all the data points labelled as the parameter ```from```, while the ending point is the centroid of all the data points labelled as the parameter ```to```. This mode is allowed only when ```X_labels``` is not NULL.
 * __3__: the starting point is the data point with the univocal rowname equal to the parameter ```from``` while the ending point is the data point with the univocal rowname equal to the parameter ```to```.
 
 The output of the function ```spathialBoundaryIds``` is a list with the following content:
@@ -88,18 +95,22 @@ The following code chunks show how to use the function ```spathialBoundaryIds```
 ``` {r eval=FALSE}
 # mode=1 (User-selected)
 boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=1)
-```
-``` {r eval=FALSE}
-# mode=3 (From named sample to another named sample)
-boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=3,
-                                               from="sample123", to="sample456")
+
 ```
 ``` {r}
 # mode=2 (From named label centroid to another label centroid)
 boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
 ```
 
-Once the boundaries are defined, and only in the case of ```mode=2```, the ```X``` and ```X_labels``` objects contain extra meta-samples (the boundaries) and need to be updated.
+```
+``` {r eval=FALSE}
+# mode=3 (From named sample to another named sample)
+boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=3,
+                                               from="sample123", to="sample456")
+
+Once the boundaries are defined, and only in the case of ```mode=2```, the ```X``` and ```X_labels``` objects 
+inside the boundary_init object contain extra meta-samples (the boundaries) and thus the original ```X``` and ```X_labels``` need to be updated
+accordingly
 ``` {r}
 # Take the output from the variable boundary_init
 boundary_ids<-boundary_init$boundary_ids
@@ -110,25 +121,28 @@ X_labels<-boundary_init$X_labels
 The following plots the boundaries when ```mode=2```, ```from=3``` and ```to=6```:
 ``` {r fig.cap="_Quick Start example - boundaries_"}
 plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels),
-     xlab=colnames(X)[1],ylab=colnames(X)[2],main="Boundary points")
+     xlab=colnames(X)[1], ylab=colnames(X)[2], main="Boundary points")
 points(X[boundary_ids,],pch="x",col="black",cex=4)
 ```
 
 ## Step 3: prefiltering (optional)
-The principal path is an algorithm intrinsically global. If you are searching for a path which does not involve the whole dataset, you can perform the function ```spathialPrefiltering```  before the principal path algorithm is applied. If you want to run _spathial_ on the entire dataset, this filtering procedure is not due.
+The principal path algorithm is intrinsically global. If one is searching for a path which does not involve the whole dataset, one 
+can run the function ```spathialPrefiltering```  before the principal path algorithm is applied. 
+If one wants to run _spathial_ on the entire dataset, this filtering procedure is not due.
 
-The function ```spathialPrefiltering``` takes as input the matrix ```X```, the corresponding labels ```X_labels``` and the boundaries ```boundary_ids``` which are the result of the function ```spathialBoundaryIds```.
+The function ```spathialPrefiltering``` takes as input the matrix ```X``` and the boundaries ```boundary_ids``` which are the result of the function ```spathialBoundaryIds```.
 
 The output of the function ```spathialPrefiltering``` is a list with the following content:
 
 * __mask__: the indexes of the samples to preserve;   
 * __boundary_ids_filtered__: the rowname of the starting and the ending points.
 
-The following code chunck shows how to use the function ```spathialPrefiltering``` and how to extract the output. The function tags excluded samples and we store them in the ```X_garbage``` matrix. The ```mask``` vector contains the samples to be kept.
+The following code shows how to use the function ```spathialPrefiltering``` and how to extract the output. 
+The function remove some samples and they are stored in the ```X_garbage``` matrix. The ```mask``` vector contains the samples to be kept.
 
 ```{r}
 # Prefilter data
-filter_res <- spathial::spathialPrefiltering(X, X_labels, boundary_ids)
+filter_res <- spathial::spathialPrefiltering(X, boundary_ids)
 mask <- filter_res$mask
 boundary_ids <- filter_res$boundary_ids
 
@@ -137,7 +151,7 @@ boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_i
 X_garbage <- X[!mask,]
 ```
 
-The following code shows the results of the prefiltering step, with excluded points greyed out:
+The following code shows the results of the prefiltering step, with removed points greyed out:
 ```{r fig.cap="_Quick Start example - prefiltering_"}
 par(mfrow=c(1,2))
 plot(X[,1],X[,2], col="black",pch=20,main="Before Filtering",
@@ -150,16 +164,16 @@ points(X_garbage[,1],X_garbage[,2], col="gray", pch=16)
 ```
 
 ## Step 4: principal path
-The function ```spathialWay``` computes the principal path algorithm and gives as output the principal path points. It takes as input the matrix ```X```, the labels ```X_labels```, the boundaries ```boundary_ids``` and the parameter ```NC```, which is the desired number of waypoints of the resulting principal path. For example, given ```NC=10``` the resulting principal path will be composed of 10 waypoints plus the starting and the ending points. 
+The function ```spathialWay``` run the principal path algorithm and gives as output the waypoints points. It takes as input the matrix ```X```, the boundaries ```boundary_ids``` and the parameter ```NC```, which is the desired number of waypoints of the resulting principal path. For example, given ```NC=10``` the resulting path will be composed of 10 waypoints plus the starting and the ending points. 
 
 The output of the function ```spathialWay``` is the variable ```spathial_res``` , which contains the coordinates of the waypoints of the principal path;   
 
-The following code chuncks show how to use the function ```spathialWay```, with or without prefiltering, and how to extract the output:
+The following code shows how to use the function ```spathialWay```, with or without prefiltering, and how to get the output:
 
 ```{r results='hide'}
 # Compute principal path without prefiltering
 NC <- 50
-spathial_res_without_filtering <- spathial::spathialWay(X, X_labels, boundary_ids, NC)
+spathial_res_without_filtering <- spathial::spathialWay(X, boundary_ids, NC)
 ```
 
 ```{r results='hide'}
@@ -167,40 +181,42 @@ spathial_res_without_filtering <- spathial::spathialWay(X, X_labels, boundary_id
 X_filtered <- X[mask,]
 X_labels_filtered <- X_labels[mask]
 NC <- 50
-spathial_res_with_filtering <- spathial::spathialWay(X_filtered, X_labels_filtered, boundary_ids, NC)
+spathial_res_with_filtering <- spathial::spathialWay(X_filtered, boundary_ids, NC)
 ```
 
-The next subsection shows how to extract results from the output ```spathial_res```.
+The next subsection shows how to get results from the output object ```spathial_res```.
 
 ## Step 5: understanding the results
-The package _spathial_ includes three different functions to understand the output of the principal path algorithm: ```spathialPlot```, ```spathialLables``` and ```spathialStatistics```. The following subsections describe what they do and how to use each of them.
+The package _spathial_ includes three different functions to interpret the output of the principal path algorithm: ```spathialPlot```, ```spathialLables``` and ```spathialStatistics```. The following subsections describe what they do and how to use each of them.
 
 ### Plot principal path
-The function ```spathialPlot``` plots the principal path together with all the data points (filtered and not) and the boundaries. The function takes as input the matrix ```X``` (the initial version), the vector ```X_labels```, the boundaries ```boundary_ids```, the output of the principal path algorithm ```spathial_res```, the parameter ```perplexity value``` (default 30) and the parameter ```mask``` which is one of the result of the prefiltering and it is ```NULL``` when the prefiltering is not computed.
+The function ```spathialPlot``` plots the principal path together with all the data points (either filtered or not filtered) together 
+with the boundaries. This function takes as input the matrix ```X``` (the initial version), the vector ```X_labels``` (or NULL), the boundaries ```boundary_ids```, the output of the principal path algorithm ```spathial_res```, the parameter ```perplexity value``` (default 30) and the parameter ```mask``` which is one of the results of the prefiltering and it is ```NULL``` when the prefiltering is not computed.
 When the input matrix ```X``` has more than 2 columns, the function reduce the dimension of the space from N (>2) to 2 using the t-SNE algorithm [2].
 
-The following code chuncks show hot to use the function ```spathialPlot``` with the principal path generated during the previous step (with and without prefiltering):
+The following code shows how to use the function ```spathialPlot``` with the path generated during the previous step (with or without prefiltering):
 
 ```{r fig.height=10, fig.cap='_Output of the spathialPlot() function. Filtered samples are marked in grey_'}
 par(mfrow=c(2,1))
 # Plot principal path with prefiltering - provide a mask
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res_with_filtering,
-                       perplexity_value=30, mask=mask, main="Principal path with prefiltering"
+                       perplexity_value=30, mask=mask,
+                       main="Principal path with prefiltering"
 )
 
 # Plot principal path without prefiltering - mask NULL
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res_without_filtering,
-                       perplexity_value=30,
+                       perplexity_value=30,                       
                        main="Principal path without prefiltering"
 )
 ```
 
 ### Assess path progression
-The function ```spathialLabels``` predicts the label for each waypoints of the principal path. It is based on the k-nearest neighbors algorithm (k-NN) [3], which is used as classifier and predicts the label of a specific entry considering the most frequent label of its k-nearest neighbors, but it considers only one neighbor.
-__This function could be particularly useful when you want to find the breakpoints between one class and the other.__ 
-The function takes as input the matrix ```X``` (which is composed only by the preserved samples if you compute the prefiltering), the vector ```X_labels``` and the output of the principal path algorithm ```spathial_res```. The output are the labels for each waypoint of the principal path.
+The function ```spathialLabels``` predicts the label for each waypoints of the principal path by detecting the nearest sample [3]. 
+This function is available only when ```X_labels != NULL``` and could be particularly useful when one wants to find the breakpoints between one class and the other. 
+The function takes as input the matrix ```X``` (which is composed only by the preserved samples if the prefiltering was used), the vector ```X_labels``` and the output object of the principal path algorithm ```spathial_res```. The output are the labels for each waypoint of the principal path.
 
-The following code chuncks show how to use the function ```spathialLabels``` and how to plot the result:
+The following code shows how to use the function ```spathialLabels``` and how to plot the result:
 
 ```{r fig.cap='_Quick Start example - path labels across path steps_'}
 ### Matrix X not filtered
@@ -224,16 +240,16 @@ plot(c(1:length(ppath_labels)), c(ppath_labels), col=colors_labels_ppath,
 )
 ```
 
-### Extract Features associated to the principal path
+### Extract principal path associated features
 The function ```spathialStatistics``` returns statistics for each feature, based on their relation with the principal path calculated and stored in ```spathial_res```.
-In particular, here we want to focus on how much each feature (a coordinate of the N-dimensional space) is involved along the evolution of the principal path. 
+In particular, here one wants to understand how much each feature (a coordinate of the N-dimensional space) is correlated with the evolution of the principal path, that is to detect evolutive features. This is a path-centric way to perform feature selection.
 
-For this reason, the output of the function ```spathialStatistics``` is a list with the following content, associating the features with a specific score associating it with path progression.
+For this reason, the output of the function ```spathialStatistics``` is a list that attaches to features a progression score.
 
 * __correlations__: This vector contains the Pearson's correlation coefficients between each feature and the path.
 * __rank_scores__: This vector contains the ranks of associations between the n features and the path (1 being the most positively correlated, and n the most negatively correlated).
 
-The following code chunks show how to use the function ```spathialStatistics``` and to extract the correlation-based association between features and the path.
+The following code shows how to use the function ```spathialStatistics``` and to extract the correlation-based association between features and the path.
 
 ```{r message="hide"}
 # Calculate Association Statistics for each feature in the path
@@ -250,13 +266,13 @@ statistics$correlations
 ```
 
 # A slightly more complex example
-In this section we show a higher-dimensionality example, with 100 features. In this case our input matrix ```X``` is a reduced version of the TCGA Liver Cancer RNA-Seq dataset which is composed only by the 100 features (gene expression profiles, RPM-normalized) with the highest variance across the dataset. The vector ```X_labels``` contains the information about the samples. In particular, the label is 1 for tumor samples, and 2 for normal liver samples, collected in the same dataset.
+In this section it is shown a higher-dimensional example, with 100 features. In this case the input matrix ```X``` is a reduced version of the TCGA Liver Cancer RNA-Seq dataset which is composed only by the 100 features (gene expression profiles, RPM-normalized) with the highest variance across the dataset. The vector ```X_labels``` contains the information about the samples. In particular, the label is 1 for tumor samples, and 2 for normal samples, collected in the same dataset.
 
 In this case, the aim of the example is to navigate the space from the centroid of the normal tissue samples (label 2) to the centroid of the tumor samples (label 1) in order to gradually morphing from one histological state to the other.
 
-The prefiltering won't be executed since we are searching for a global solution.
+The prefiltering won't be executed since one is searching for a global solution.
 
-The following code blocks show how to compute the principal path algorithm. First, we load the data from a CSV file containing RPM-normalized gene expression data:
+The following code blocks shows how to compute the principal path algorithm. First, one loads the data from a CSV file containing RPM-normalized gene expression data:
 
 ```{r}
 # Load data
@@ -265,7 +281,7 @@ data<-read.csv(myfile,as.is=TRUE,header=TRUE,row.names=1)
 data[1:4,1:5]
 ```
 
-We then transform it into two objects: the numeric gene expression profiles (```X```) and the associations between samples and sample Category (```X_labels```), where 1 indicates a tumor sample, and 2 a normal tissue sample.
+Then one transforms it into two objects: the numeric gene expression profiles (```X```) and the associations between samples and samples category (```X_labels```), where 1 indicates a tumor sample, and 2 a normal tissue sample.
 ```{r}
 X <- data[,1:(ncol(data)-1)]
 X_labels <- data[,"Category"]
@@ -280,11 +296,11 @@ boundary_ids <- boundary_init$boundary_ids
 X <- boundary_init$X
 X_labels <- boundary_init$X_labels
 
-# Compute spathial
+# run spathial
 NC <- 50
-spathial_res <- spathial::spathialWay(X, X_labels, boundary_ids, NC)
+spathial_res <- spathial::spathialWay(X, boundary_ids, NC)
 ```
-In order to visualize the multi-dimensional dataset on two dimensions, we perform a TSNE analysis on it [2].
+In order to visualize the multi-dimensional dataset on two dimensions, one performs a TSNE analysis on it [2].
 
 ```{r fig.cap="_Principal Path across the TCGA Liver Cancer dataset_"}
 # Plot the path in 2D using Rtsne
@@ -305,13 +321,14 @@ plot(c(1:length(ppath_labels)), c(ppath_labels), col=colors_labels_ppath,
 )
 ```
 
-We can quickly extract the gene expression profiles most correlated with the path:
+Then one can quickly extract the gene expression profiles most correlated with the path:
 ```{r}
 # Correlation along the path
 statistics<-spathialStatistics(spathial_res)
 ```
-In this case, the statistics are particularly interesting, as they show the functional genes most associated to the transition between normal and tumor liver tissues. 
-In fact, they contain information about the correlation between each feature (genes) of the principal path and a vector from 1 to NC+2 (where NC is the number of waypoints) and help to find the genes particularly involved with the evolution from the healthy to the unhealthy state. The following code blocks highlights the 10 genes most positively and the 10 most negatively associated to the normal-tumor path progression:
+In this case, the statistic is particularly interesting, as it shows the most associated the functional genes to the transition between normal and tumor liver tissues. 
+In fact, it contains information about the correlation between each feature (genes) and a vector from 1 to NC+2 (where NC is the number of waypoints)
+that represents the progression along the path.  This helps finding the genes particularly involved with the evolution from the healthy to the unhealthy state. The following code highlights the 10 most positively and most negatively associated genes to the normal-tumor path progression:
 ```{r}
 singlepath_correlations<-statistics$correlations
 top_positive_correlations<-sort(singlepath_correlations,decreasing=TRUE)[1:10]
@@ -327,7 +344,3 @@ top_negative_correlations
 [2]  L. van der Maaten and G. Hinton, “Viualizing data using t-SNE,” Journal of Machine Learning Research, vol. 9, pp. 2579–2605, Nov. 2008.
 
 [3] T. Cover  and  P.  Hart,  “Nearest  neighbor  pattern  classification,”  IEEE Transactions on Information Theory, vol. 13, pp. 21–27, Jan. 1967.
-
-
-
-

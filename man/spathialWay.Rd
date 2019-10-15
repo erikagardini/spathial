@@ -4,12 +4,10 @@
 \alias{spathialWay}
 \title{Compute Principal Path}
 \usage{
-spathialWay(X, X_labels, boundary_ids, NC = 50)
+spathialWay(X, boundary_ids, NC = 50)
 }
 \arguments{
 \item{X}{data points}
-
-\item{X_labels}{labels of the data points}
 
 \item{boundary_ids}{starting and ending points}
 
@@ -35,7 +33,7 @@ boundary_ids <- boundaryRes$boundary_ids
 #Set the number of waypoints
 NC <- 20
 # Run spathialWay without prefilterint
-spathial_res <- spathialWay(X, X_labels, boundary_ids, NC)
+spathial_res <- spathialWay(X, boundary_ids, NC)
 spathial_res
 
 #EXAMPLE 2
@@ -48,13 +46,13 @@ boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
 X <- boundaryRes$X
 X_labels <- boundaryRes$X_labels
 boundary_ids <- boundaryRes$boundary_ids
-# Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
-filterRes <- spathialPrefiltering(X, X_labels, boundary_ids)
+# Run spathial spathialPrefiltering with the output of the function spathialBoundaryIds
+filterRes <- spathialPrefiltering(X, boundary_ids)
 #Set the number of waypoints
 NC <- 20
 # Run spathialWay with the filtered data
 mask <- filterRes$mask
 boundary_ids <- filterRes$boundary_ids
-spathial_res <- spathialWay(X[mask,], X_labels[mask], boundary_ids, NC)
+spathial_res <- spathialWay(X[mask,], boundary_ids, NC)
 spathial_res
 }

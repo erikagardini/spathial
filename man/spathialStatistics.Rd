@@ -33,13 +33,13 @@ X <- boundaryRes$X
 X_labels <- boundaryRes$X_labels
 boundary_ids <- boundaryRes$boundary_ids
 # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
-filterRes <- spathialPrefiltering(X, X_labels, boundary_ids)
+filterRes <- spathialPrefiltering(X, boundary_ids)
 #Set the number of waypoints
 NC <- 20
 # Run spathialWay with the filtered data
 mask <- filterRes$mask
 boundary_ids <- filterRes$boundary_ids
-spathial_res <- spathialWay(X[mask,], X_labels[mask], boundary_ids, NC)
+spathial_res <- spathialWay(X[mask,], boundary_ids, NC)
 #Run spathialStatistics with spathial_res
 statistics <- spathialStatistics(spathial_res)
 }
