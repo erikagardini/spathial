@@ -11,7 +11,7 @@ Authors@R: person("Erika", "Gardini", email = "erika.gardini4@unibo.it",
 Maintainer: Erika Gardini <erika.gardini4@unibo.it>
 Description: spathial is an algorithm to calculate and define principal paths
   in data space.
-License: LGPL-3
+License: GPL-3
 Encoding: UTF-8
 LazyData: TRUE
 RoxygenNote: 6.1.1
