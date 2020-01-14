@@ -14,7 +14,7 @@ Description: spathial is an algorithm to calculate and define principal paths
 License: file LICENSE
 Encoding: UTF-8
 LazyData: TRUE
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 Depends: R (>= 3.5)
 NeedsCompilation: no
 Imports: 

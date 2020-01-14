@@ -90,9 +90,7 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
     ### Update waypoints
     # Compute the (Moore-Penrose) pseudo-inverse of the multiplied Hessians
     pseudo<-MASS::ginv(AX+s*AW)
-    # Multiply the centroid matrix with the s parameter with the boundaries, it's so clear it hurts
     csb<-C+0.5*s*B
-    # Let's multiply these matrices, for the glory of the FaBiT
     W<-pseudo%*%csb
     rownames(W)<-rownames(B)
     colnames(W)<-colnames(X)
@@ -135,8 +133,8 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1){
       medmed_dst_p[k,i]<-medmed_dst[k,i]
     }
   }
-  medmed_dst_p[1,Nf]<-0 # NOTE: not sure why this is done
-  medmed_dst_p[Nf,1]<-0 # NOTE: not sure why this is done
+  medmed_dst_p[1,Nf]<-0
+  medmed_dst_p[Nf,1]<-0
 
   # Find shortest path using dijkstra
   g<-igraph::graph.adjacency(medmed_dst_p, weighted=TRUE)

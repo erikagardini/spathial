@@ -11,8 +11,15 @@ vignette: >
 ```{r echo=FALSE}
 knitr::opts_chunk$set(fig.width=7, fig.height=5) 
 ```
+__The _spathial_ package is generic tool for manifold analysis. It allows to infer a relevant transition or evolutionary path which can highlights the features involved in a specific process. _spathial_ can be useful in all the scenarios where the temporal evolution is the main problem (e.g. thumor progression).__   
 
-The _spathial_ package contains functions to create a path able to navigate a n-dimensional space.
+__The _spathial_ package implements the principal path algorithm [1] and allows to navigate a n-dimensional space. The input of the algorithm are two points, which represent the boundary condition of the algorithm: the start and the end points. Given the boundaries, the algorithm learns a smooth transition path connecting them. Along the path there are new intermediate data samples which gradually morphs from the start point to the end point.__
+__In this way it is possible to move from two known states and analize which features are involved in the transition from the two states.__
+__The workflow for constructing the path is composed of few steps. Firstly, it is necessary to choose the start and the end points. _spathial_ provides three different alternatives to do that (which will be discussed later), but the user can additionally choose their own strategy. The second step consist in prefiltering the data. This step is non strictly necessary to construct the path, but allows to obtain a local solution removing some of the data points. In this way, the solution is based on a restricted number of samples. Finally, it is possible to compute the principal path algorithm.__ 
+
+__spathial_ additionally provides functions to analize the path. In particular it allows to plot data in 2d using the t-SNE algorithm [2] for dimensionality reduction, to learn the labels corresponding to each path's intermediate points using the kNN algorithm [3] and to compute the statistics (Pearson's correlation and rank). The latter allows to find the features involved in the transition process from the start point to the end point.__
+
+__The next sections describes how to use _spathial_ and provides some examples.__
 
 # Quick start
 In this section the most basic steps to run the _spathial_ implementation of the principal path algorithm [1] are shown, through a simple 2d example.
@@ -27,26 +34,28 @@ And its loading:
 library("spathial")
 ```
 
-## Step 1: load data
+## Load data
 To compute the principal path one assumes that to have an input matrix ```X```. 
 Each column of the matrix ```X``` is a feature (e.g. a gene) and each row has a univocal name (e.g. a sample). 
-For a supervised solution, one also assumes that the input vector ```X_labels``` is present which contains for each row of ```X``` a description label (e.g. the sample category). Labels must be integer numbers ranging from 1 to the n-th category. Otherwise, the unsupervised solution can be obtained with ```X_labels = NULL```.
+For a supervised solution, one also assumes that the input vector ```X_labels``` is present which contains for each row of ```X``` a description label (e.g. the sample category). 
+Otherwise, the unsupervised solution can be obtained with ```X_labels = NULL```.
 For the sake of simplicity, a simple .csv file with 900 samples and 
 3 columns (2 + labels) is provided. The following code snippet shows how to load the .csv and how to properly format the data.
 
 ```{r}
 # Load the dataset with 900 samples
 myfile<-system.file("extdata", "2D_constellation.csv", package = "spathial")
-data<-read.csv(myfile,as.is=TRUE,header=TRUE,row.names=1)
+data<-read.csv(myfile,as.is=TRUE,header=TRUE)
 head(data)
 ```
 
 ```{r}
 # Vector X_labels
 X_labels <- data$label
-
+X_labels_num <- data$numLabels
 # Data Matrix X
-X <- data[,1:(ncol(data)-1)]
+X <- data[,2:(ncol(data)-2)]
+rownames(X)<-paste0("sam",rownames(X))
 ```
 
 This is how the data matrix ```X``` should look like at this point
@@ -64,14 +73,19 @@ The following code snippet shows how to plot the data points colored according t
 
 ```{r fig.cap="_Quick Start example dataset_"}
 # Plot the results
-colors<-rainbow(length(unique(X_labels)))
-colors_labels<-sapply(X_labels,function(x){colors[x]})
-plot(X[,1],X[,2],col=colors_labels,pch=as.character(X_labels),
-     xlab=colnames(X)[1],ylab=colnames(X)[2])
+colors <- rainbow(length(table(as.numeric(as.factor(X_labels)))))
+colors_labels <- sapply(as.numeric(as.factor(X_labels)), function(x){colors[x]})
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+plot(X[,1],X[,2],col=colors_labels,pch=as.character(as.numeric(as.factor(X_labels))),
+      xlab=colnames(X)[1],ylab=colnames(X)[2], main="Data points")
+legend_names = unique(X_labels)
+legend_color = unique(colors_labels)
+legend_pch = unique(as.character(as.numeric(as.factor(X_labels))))
+legend("topright", inset=c(-0.25,0), legend=legend_names, col=legend_color, pch=legend_pch)
 ```
 
-## Step 2: select the boundaries
-The fist step to compute the principal path consists in selecting the starting and the ending points. 
+## Step 1: select the boundaries
+The first step to compute the principal path consists in selecting the starting and the ending points. 
 The package spathial has the function ```spathialBoundaryIds``` which takes as input the matrix ```X```, 
 the corresponding labels ```X_labels``` (or NULL) and the parameters ```mode```, ```from``` and ```to```.
 
@@ -90,16 +104,17 @@ The output of the function ```spathialBoundaryIds``` is a list with the followin
 
 __N.B.__ The matrix ```X``` and the vector ```X_labels``` change only when ```mode=2``` (the resulting matrix and vector have two additional elements, corresponding to the centroids).
 
+__User can choose the start and the end point with their own strategy, which can be more suitable for their specific problem; in this case, the user should run the function ```spathialBoundaryIds``` with ```mode=3``` specifing the rownames of the samples using the parameters ```from``` and ```to```.__
+
 The following code chunks show how to use the function ```spathialBoundaryIds```, with different values of the parameter ```mode```, and how to extract the output:
 
 ``` {r eval=FALSE}
 # mode=1 (User-selected)
 boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=1)
-
 ```
 ``` {r}
 # mode=2 (From named label centroid to another label centroid)
-boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
+boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=2, from="c3", to="c6")
 ```
 
 ```
@@ -120,9 +135,15 @@ X_labels<-boundary_init$X_labels
 
 The following plots the boundaries when ```mode=2```, ```from=3``` and ```to=6```:
 ``` {r fig.cap="_Quick Start example - boundaries_"}
-plot(X[,1],X[,2], col=colors_labels, pch=as.character(X_labels),
-     xlab=colnames(X)[1], ylab=colnames(X)[2], main="Boundary points")
-points(X[boundary_ids,],pch="x",col="black",cex=4)
+#Plot the results
+boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+plot(X[,1],X[,2], col=colors_labels, pch=as.character(as.numeric(as.factor(X_labels))), xlab=colnames(X)[1], ylab=colnames(X)[2], main="Boundary points")
+points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
+legend_names = c(unique(X_labels), "boundaries")
+legend_color = c(unique(colors_labels), "black")
+legend_pch = c(unique(as.character(as.numeric(as.factor(X_labels)))), "X")
+legend("topright", inset=c(-0.3,0), legend=legend_names, col=legend_color, pch=legend_pch)
 ```
 
 ## Step 3: prefiltering (optional)
@@ -152,15 +173,25 @@ X_garbage <- X[!mask,]
 ```
 
 The following code shows the results of the prefiltering step, with removed points greyed out:
-```{r fig.cap="_Quick Start example - prefiltering_"}
-par(mfrow=c(1,2))
-plot(X[,1],X[,2], col="black",pch=20,main="Before Filtering",
-     xlab=colnames(X)[1],ylab=colnames(X)[2])
-points(X[boundary_ids,],pch="x",col="red3",cex=4)
-plot(X[,1],X[,2], col="black",pch=20,main="After Filtering",
-     xlab=colnames(X)[1],ylab=colnames(X)[2])
-points(X[boundary_ids,],pch="x",col="red3",cex=4)
-points(X_garbage[,1],X_garbage[,2], col="gray", pch=16)
+```{r fig.height=10, fig.cap="_Quick Start example - prefiltering_"}
+par(mfrow=c(2,1))
+
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+plot(X[,1],X[,2], col=colors_labels, pch=as.character(as.numeric(as.factor(X_labels))), xlab=colnames(X)[1], ylab=colnames(X)[2], main="Before Filtering")
+points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
+legend_names = c(unique(X_labels), "boundaries")
+legend_color = c(unique(colors_labels), "black")
+legend_pch = c(unique(as.character(as.numeric(as.factor(X_labels)))), "X")
+legend("topright", inset=c(-0.3,0), legend=legend_names, col=legend_color, pch=legend_pch)
+
+par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+plot(X[,1],X[,2], col=colors_labels, pch=as.character(as.numeric(as.factor(X_labels))), main="After Filtering", xlab=colnames(X)[1],ylab=colnames(X)[2])
+points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
+points(X_garbage[,1],X_garbage[,2], col="gray", pch=4)
+legend_names = c(unique(X_labels), "boundaries", "filtered")
+legend_color = c(unique(colors_labels), "black", "gray")
+legend_pch = c(unique(as.character(as.numeric(as.factor(X_labels)))), "X", "x")
+legend("topright", inset=c(-0.3,0), legend=legend_names, col=legend_color, pch=legend_pch)
 ```
 
 ## Step 4: principal path
@@ -196,14 +227,14 @@ When the input matrix ```X``` has more than 2 columns, the function reduce the d
 
 The following code shows how to use the function ```spathialPlot``` with the path generated during the previous step (with or without prefiltering):
 
-```{r fig.height=10, fig.cap='_Output of the spathialPlot() function. Filtered samples are marked in grey_'}
-par(mfrow=c(2,1))
+```{r fig.cap='_Output of the spathialPlot() function._'}
 # Plot principal path with prefiltering - provide a mask
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res_with_filtering,
                        perplexity_value=30, mask=mask,
                        main="Principal path with prefiltering"
 )
-
+```
+```{r, cap='_Output of the spathialPlot() function. Filtered samples are marked in grey._'}
 # Plot principal path without prefiltering - mask NULL
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res_without_filtering,
                        perplexity_value=30,                       
@@ -222,20 +253,21 @@ The following code shows how to use the function ```spathialLabels``` and how to
 ### Matrix X not filtered
 ppath_labels <- spathial::spathialLabels(X, X_labels, spathial_res_with_filtering)
 # Plot the results
-ppath_labels <- as.vector(ppath_labels)
-colors_labels_ppath <- sapply(ppath_labels, function(y){colors[as.integer(y)]})
-plot(c(1:length(ppath_labels)), c(ppath_labels), col=colors_labels_ppath,
-     pch=as.character(ppath_labels), xlab="Path Step", ylab="Sample Label",
+ppath_labels_numerical = as.numeric(as.factor(ppath_labels))
+
+colors_labels_ppath <- sapply(ppath_labels_numerical, function(y){colors[as.integer(y)]})
+plot(c(1:length(ppath_labels_numerical)), c(ppath_labels_numerical), col=colors_labels_ppath,
+     pch=as.character(ppath_labels_numerical), xlab="Path Step", ylab="Sample Label",
      main="Path progression with prefiltering"
 )
 
 ### Matrix X filtered
 ppath_labels <- spathial::spathialLabels(X, X_labels, spathial_res_without_filtering)
 # Plot the results
-ppath_labels <- as.vector(ppath_labels)
-colors_labels_ppath <- sapply(ppath_labels, function(y){colors[as.integer(y)]})
-plot(c(1:length(ppath_labels)), c(ppath_labels), col=colors_labels_ppath,
-     pch=as.character(ppath_labels), xlab="Path Step", ylab="Sample Label",
+ppath_labels_numerical = as.numeric(as.factor(ppath_labels))
+colors_labels_ppath <- sapply(ppath_labels_numerical, function(y){colors[as.integer(y)]})
+plot(c(1:length(ppath_labels_numerical)), c(ppath_labels_numerical), col=colors_labels_ppath,
+     pch=as.character(ppath_labels_numerical), xlab="Path Step", ylab="Sample Label",
      main="Path progression without prefiltering"
 )
 ```
@@ -266,9 +298,9 @@ statistics$correlations
 ```
 
 # A slightly more complex example
-In this section it is shown a higher-dimensional example, with 100 features. In this case the input matrix ```X``` is a reduced version of the TCGA Liver Cancer RNA-Seq dataset which is composed only by the 100 features (gene expression profiles, RPM-normalized) with the highest variance across the dataset. The vector ```X_labels``` contains the information about the samples. In particular, the label is 1 for tumor samples, and 2 for normal samples, collected in the same dataset.
+In this section it is shown a higher-dimensional example, with 100 features. In this case the input matrix ```X``` is a reduced version of the TCGA Liver Cancer RNA-Seq dataset which is composed only by the 100 features (gene expression profiles, RPM-normalized) with the highest variance across the dataset. The vector ```X_labels``` contains the information about the samples. In particular, the label is "Tumor" for tumor samples, and "Normal" for normal samples, collected in the same dataset.
 
-In this case, the aim of the example is to navigate the space from the centroid of the normal tissue samples (label 2) to the centroid of the tumor samples (label 1) in order to gradually morphing from one histological state to the other.
+In this case, the aim of the example is to navigate the space from the centroid of the normal tissue samples (label "Normal") to the centroid of the tumor samples (label "Tumor") in order to gradually morphing from one histological state to the other. __For this reason, one can use the function ```spathialBoundaries``` with ```mode=2``` specifying ```from="Normal"``` and ```to="Tumor"```. __
 
 The prefiltering won't be executed since one is searching for a global solution.
 
@@ -281,7 +313,7 @@ data<-read.csv(myfile,as.is=TRUE,header=TRUE,row.names=1)
 data[1:4,1:5]
 ```
 
-Then one transforms it into two objects: the numeric gene expression profiles (```X```) and the associations between samples and samples category (```X_labels```), where 1 indicates a tumor sample, and 2 a normal tissue sample.
+Then one transforms it into two objects: the numeric gene expression profiles (```X```) and the associations between samples and samples category (```X_labels```), where "Tumor" indicates a tumor sample, and "Normal" a normal tissue sample.
 ```{r}
 X <- data[,1:(ncol(data)-1)]
 X_labels <- data[,"Category"]
@@ -300,7 +332,7 @@ X_labels <- boundary_init$X_labels
 NC <- 50
 spathial_res <- spathial::spathialWay(X, boundary_ids, NC)
 ```
-In order to visualize the multi-dimensional dataset on two dimensions, one performs a TSNE analysis on it [2].
+In order to visualize the multi-dimensional dataset on two dimensions, one performs a t-SNE analysis on it [2].
 
 ```{r fig.cap="_Principal Path across the TCGA Liver Cancer dataset_"}
 # Plot the path in 2D using Rtsne
@@ -337,6 +369,317 @@ top_negative_correlations<-sort(singlepath_correlations,decreasing=FALSE)[1:10]
 top_negative_correlations
 ```
 
+# A real case study
+
+In this section it is shown a real case study on TCGA Lung Cancer RNA-Seq dataset. In this case the input matrix ```X``` is the fully TCGA Lung Cancer RNA-Seq dataset, with 19637 features (gene expression profiles, RPM-normalized) and 562 samples. Each column of our matrix ```X``` represents a feature and each row is the gene expression profile of a specific sample. The vector ```X_labels``` contains the annotations of the samples ("Tumor" or "Normal") which can be extracted from the TCGA barcode.
+We provide an ```.rda``` file with both the ```X``` and ```X_labels```. You can simply load it by computing the following command.
+
+```{r}
+myfile<-system.file("extdata", "luad_tcga.rda", package = "spathial")
+load(myfile)
+```
+
+The aim of the example is to navigate the space from the normal samples to the tumor samples.
+
+In this case, the start point is the more distant normal sample from the tumor centroid and the end point is the more distant tumor sample from the normal centroid. 
+(Explanation?)  
+
+Since this is not an existing ```spathialBoundaries``` mode, one can extract the rownames of the starting and the ending points, then one can use the function ```spathialBoundaries``` with ```mode=3``` and setting ```from``` and ```to``` respectively equal to the rownames of the starting and the ending points.
+
+The following code block shows how to find the rowname of our start and end point:
+```{r}
+#Compute centroids
+normal_centroid <- colMeans(X[which(X_labels == "normal"),], na.rm = TRUE)
+tumor_centroid <- colMeans(X[which(X_labels == "tumor"),], na.rm = TRUE)
+
+#Subdivide normal samples from tumor samples
+normal <- X[which(X_labels == "normal"),]
+tumor <- X[which(X_labels == "tumor"),]
+
+#Get start and end point names
+getMaxDistancePoint <- function(centroid, samples){
+  library(pracma)
+
+  centroid <- t(centroid)
+  dst<-pracma::distmat(
+    as.matrix(centroid),
+    as.matrix(samples)
+  )
+  ord <- order(-dst)
+  return(rownames(samples)[ord[1]])
+}
+
+startPoint <- getMaxDistancePoint(tumor_centroid, normal)
+endPoint <- getMaxDistancePoint(normal_centroid, tumor)
+```
+
+Now, one can use the spathial method ```spathialBoundaryIds``` with ```mode=3``` in order to initialize the boudaries as shown below:
+```{r}
+boundaries <- spathial::spathialBoundaryIds(X, X_labels, mode=3, from=startPoint, to=endPoint)
+boundary_ids<-boundaries$boundary_ids
+X <- boundaries$X
+X_labels <- boundaries$X_labels
+```
+
+In this case the prefiltering won't be executed since one is searching for a global solution. 
+The next step consists in computing the principal path algorithm using the ```spathial``` method ```spathialWay```. A path with 50 intermediate points (waypoints) can be obtained with ```NC=50```. 
+
+```
+spathial_res <- spathial::spathialWay(X, boundary_ids, NC = 50)
+save(spathial_res, "spathial_res.rda")
+```
+
+Each waypoint is a new gene profile which is sligthly different from the previous one and all of them are topologically connected via a chain of springs.
+
+The ```spathial``` method ```spathialPlot``` can be used to visualize the path.
+```{r}
+my_res<-system.file("extdata", "spathial_res.rda", package = "spathial")
+load(my_res)
+spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value = 30, mask = NULL)
+```
+Since in this example we have a n-dimensional space (with n = 19637), a dimensionality reduction strategy is necessary to plot the principal path algorithm. ```spathial``` uses the t-SNE algorithm [2]. 
+
+The ```spathial``` method ```spathialStatistics``` can be used to calculate the Pearson's correlation coefficients and rank the genes according to the correlation scores: 
+```{r}
+spathial_statistics <- spathial::spathialStatistics(spathial_res)
+```
+
+In this way it is possible to find the genes involved in the transition from "Normal" to "Tumor".
+
+### Compare _spathial_ with _edgeR_
+
+In this section, some scripts are provided in order to compare the results obtained with _spathial_ with one commonly used tools for DGEA: _edgeR_.
+
+#### Computing edgeR
+_edgeR_ is a package for differential expression analysis of digital gene expression data [4][5]. It implements a range of statistical methodology based on the negative binomial distributions, including empirical Bayes estimation, exact tests, generalized linear models and quasi-likelihood tests. As well as RNA-seq, it be applied to differential signal analysis of other types of genomic data that produce counts, including ChIP-seq, Bisulfite-seq, SAGE and CAGE.
+
+The following script shows how to use edgeR and extract the resulting statistics:
+```
+library(edgeR)
+
+rawcounts <- t(X)
+
+group<-as.factor(X_labels)
+group<-relevel(group,ref="normal")
+edger<-DGEList(rawcounts,group=group,genes=rownames(rawcounts))
+design<-model.matrix(~0+group)
+colnames(design)<-levels(group)
+keep <- filterByExpr(edger, design) # Filtering to remove low counts
+table(keep)
+edger<-edger[keep,,keep.lib.sizes=FALSE]
+edger<-calcNormFactors(edger) # Normalization for composition bias
+edger<-estimateDisp(edger,design,robust=TRUE) # Dispersion estimation
+fit<-glmQLFit(edger,design,robust=TRUE) # Quasi-Likelihood dispersion estimate
+contrast<-makeContrasts(tumor-normal,levels=design)
+res<-glmQLFTest(fit,contrast=contrast)
+res<-res$table
+res$padj<-p.adjust(res$PValue,method="BH")
+colnames(res)<-c("logFC","logCPM","F","pvalue","padj")
+edger<-res
+save(edger, file="edger_res.rda")
+```
+
+In the following code chunk the genes from the ```spathial``` experiment are ranked according to the Pearson's correlation score (from 1 to -1) and the genes from the ```edgeR``` experiment are ranked according to the false discovery rate (FDR) calculated using the Bejamini-Hochberg (BH) method in DESeq2 (from the highest value to the lowest value):  
+```{r}
+###Sorting according to correlation values (from 1 to -1)
+spathial_cor<-sort(setNames(spathial_statistics$correlations,colnames(spathial_res)),dec=TRUE)
+
+###Loading edgeR results
+load(system.file("extdata", "edger_res.rda", package = "spathial"))
+edger_fdr <- sort(setNames(-log10(edger$padj)*sign(edger$logFC),rownames(edger)), dec=TRUE)
+```
+Finally, one compare the two results. In particular, a list of known tumor suppressor genes (tsg) and oncogenes is loaded (respectively 242 and 240 genes). Then, the subset of genes which are in common between the _spathial_ result and the _edgeR_ result are selected (16865 genes) and the genes (previously sorted) which are not highly positively and negatively correlated with the path are removed. Among the remaining genes, the genes which are not in the tsg or the oncogenes lists are removed. Finally, the genes highlighted by _spathial_ better than _edgeR_ are selected (30 genes positively correlated and 30 genes negatively correlated). 
+
+The scripts also plot the result. For a better visual representation, the function "plotComparison" shows the rank (which is from 1 to 16865) of the genes. On the y-axis users can find the rank of the genes produced by _spathial_. In particular, at the beginning and the end of the rank users can find respectively the genes which are highly negatively correlated (tumor suppressor genes) and highly positively correlated. On the x-axis users can find the rank of the genes produced by _edgeR_. In particular, on the left we can find genes with low FDR and on the righ we can find genes with high FDR.  
+
+```{r}
+###Loading Cancer Gene Census
+load(system.file("extdata", "cgc_genelists.rda", package = "spathial"))
+# Remove genes that are both TSG and oncogenes
+tmp<-setdiff(oncogenes,tsg)
+tsg<-setdiff(tsg,oncogenes)
+oncogenes<-tmp
+rm(tmp)
+
+###Utility functions
+compareTool <- function(oncogenes, tsg, edger_fdr, spathial_cor){
+  ### Make them comparable
+  common<-intersect(names(spathial_cor),names(edger_fdr))
+  x<-edger_fdr[common]
+  y<-spathial_cor[common]
+  xrank<-rank(x,ties.method="random")
+  yrank<-rank(y,ties.method="random")
+  revxrank<-rank(-x,ties.method="random")
+  revyrank<-rank(-y,ties.method="random")
+
+  ### Most different genes Path vs. DE
+  ponc<-intersect(names(y[y>quantile(y,p=0.7)]),oncogenes)
+  ptsg<-intersect(names(y[y<quantile(y,p=0.3)]),tsg)
+  ratio<-xrank[ponc]^2-yrank[ponc]^2
+  ponc<-names(sort(ratio))[1:30]
+  ratio<-revxrank[ptsg]^2-revyrank[ptsg]^2
+  ptsg<-names(sort(ratio))[1:30]
+
+  plotComparison(x, y, ptsg, ponc, xrank, yrank)
+}
+
+plotComparison <- function(x, y, ptsg, ponc, xrank, yrank){
+  if(!is.na(ptsg) && !is.na(ponc)){
+    set.seed(1)
+    plot(xrank,yrank,col="lightgrey",
+         xlim=c(-2000,20000),
+         ylim=c(-2000,20000),
+         xlab="edgeR Rank",pch=20,
+         ylab="Path Rank"
+    )
+    points(xrank[ponc],yrank[ponc],col="#FF000033",pch=20)
+    points(xrank[ptsg],yrank[ptsg],col="#0000FF33",pch=20)
+    textplot3(xrank[ponc],yrank[ponc],words=ponc,col="red3",font=2,cex=1.1,line.col="#FF000033",line.width=2)
+    textplot3(xrank[ptsg],yrank[ptsg],words=ptsg,col="navy",font=2,cex=1.1,line.col="#0000FF33",line.width=2)
+    abline(h=yrank[which.min(abs(y))])
+    abline(v=xrank[which.min(abs(x))])
+    legend("bottomright",legend=c("Oncogene","TSG"),text.col=c("red3","navy"),text.font=2,cex=1.3)
+  }else{
+    message("No common values found")
+  }
+}
+
+textplot3<-function(x, y, words, cex = 1, pch = 16, pointcolor = "#FFFFFF00",line.width=1,
+                    new = FALSE, show.lines = TRUE, line.col="black",rstep=0.5,...)
+{
+  if (new) {
+    plot(x, y, type = "n", ...)
+  }
+  lay <- wordcloud::wordlayout(x, y, words, cex, rstep=rstep, ...)
+  if (show.lines) {
+    for (i in seq_len(length(x))) {
+      xl <- lay[i, 1]
+      yl <- lay[i, 2]
+      w <- lay[i, 3]
+      h <- lay[i, 4]
+      if (x[i] < xl || x[i] > xl + w || y[i] < yl || y[i] >
+          yl + h) {
+        points(x[i], y[i], pch = pch, col = pointcolor,
+               cex = 0.5)
+        nx <- xl + 0.5 * w
+        ny <- yl + 0.5 * h
+        lines(c(x[i], nx), c(y[i], ny), col = line.col,lwd=line.width)
+      }
+    }
+  }
+  text(lay[, 1] + 0.5 * lay[, 3], lay[, 2] + 0.5 * lay[, 4],
+       words, cex = cex, ...)
+}
+
+###Compare
+compareTool(oncogenes, tsg, edger_fdr, spathial_cor)
+```
+
+# An example with Single-cell RNA-Seq data
+
+In this section it is shown a real case study on the Karlsson Single-cell RNA-Seq dataset. In this case the input matrix ```X``` is composed by 23928 features (gene expression profiles, TPMS-normalized??? ) and 96 samples. Each column of our matrix ```X``` represents a feature and each row is the gene expression profile of a specific cell. The vector ```X_labels``` contains the annotations of the cell ("G1", "S" or "G2/M") which describes the phase of the cell cycle.
+We provide an ```.rda``` file with both the ```X``` and ```X_labels```. You can simply load it by computing the following command.
+
+```{r}
+expmat<-system.file("extdata", "karlsson-tpms.rda", package = "spathial")
+load(expmat)
+meta_data<-system.file("extdata", "karlsson-rawcounts.rda", package = "spathial")
+load(meta_data)
+X <- t(tpms)
+X_labels <- annotation
+```
+
+The aim of the example is to navigate the space from the "G1" phase to the "G2/M" phase in order to find the genes involved in the cell cycle.
+
+In this case, the start point is the centroid of the "G1" cells and the end point is the centroid of the "G2" cells. 
+
+This is an existing ```spathialBoundaries``` mode, therefore can use the function ```spathialBoundaries``` with ```mode=2``` and setting ```from``` and ```to``` respectively equal to "G1" and "G2".
+
+The following code block shows how to find set the boundaries:
+```{r}
+boundaries <- spathial::spathialBoundaryIds(X, X_labels, mode=2, from="G1", to="G2/M")
+boundary_ids<-boundaries$boundary_ids
+X <- boundaries$X
+X_labels <- boundaries$X_labels
+```
+
+In this case the prefiltering won't be executed since one is searching for a global solution. 
+The next step consists in computing the principal path algorithm using the ```spathial``` method ```spathialWay```. A path with 50 intermediate points (waypoints) can be obtained with ```NC=50```. 
+
+```{r}
+spathial_res <- spathial::spathialWay(X, boundary_ids, NC = 50)
+```
+
+Each waypoint is a new cell which is sligthly different from the previous one and all of them are topologically connected via a chain of springs.
+
+The ```spathial``` method ```spathialPlot``` can be used to visualize the path.
+```{r}
+spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value = 30, mask = NULL)
+```
+Since in this example we have a n-dimensional space (with n = 23928), a dimensionality reduction strategy is necessary to plot the principal path algorithm. ```spathial``` uses the t-SNE algorithm [2]. 
+
+The ```spathial``` method ```spathialStatistics``` can be used to calculate the Pearson's correlation coefficients and rank the genes according to the correlation scores: 
+```{r}
+spathial_statistics <- spathial::spathialStatistics(spathial_res)
+```
+
+In this way it is possible to find the genes involved in the transition from "G1" to "G2/M".
+
+### Compare _spathial_ with _Monocle3_
+
+In this section, some scripts are provided in order to compare the results obtained with _spathial_ with one commonly used tools for Single-cell transcriptome sequencing (sc-RNA-seq) experiments.
+
+#### Computing _Monocle3_
+
+_Monocle3_ is a package for discovering new cell types and understanding how they arise in development in Single-cell transcriptome sequencing (sc-RNA-seq) experiments [CITA].
+
+It allows to perform three main types of analysis:
+
+- clustering, classifying, and counting cells: Single-cell RNA-Seq experiments allow you to discover new (and possibly rare) subtypes of cells. _Monocle3_ helps you identify them;
+- constructing single-cell trajectories: in development, disease, and throughout life, cells transition from one state to another. _Monocle3_ helps you discover these transitions;
+- differential expression analysis: characterizing new cell types and states begins with comparisons to other, better understood cells. _Monocle3_ includes a sophisticated, but easy-to-use system for differential expression.
+
+The following script shows how to use _Monocle3_ and extract the resulting statistics:
+```
+library(Monocle3)
+cell_annotation <- as.matrix(annotation)
+rownames(cell_annotation) <- colnames(tpms)
+colnames(cell_annotation) <- "cycle"
+
+gene_annotation <- as.matrix(rownames(tpms))
+rownames(gene_annotation) <- rownames(tpms)
+colnames(gene_annotation) <- "gene_short_name"
+
+cds <- new_cell_data_set(tpms,
+                         cell_metadata = cell_annotation,
+                         gene_metadata = gene_annotation)
+cds <- preprocess_cds(cds, num_dim = 100)
+cds <- reduce_dimension(cds, preprocess_method = "PCA")
+cds <- cluster_cells(cds)
+cds <- learn_graph(cds)
+
+ciliated_cds_pr_test_res <- graph_test(cds, neighbor_graph="principal_graph", cores=4)
+save(ciliated_cds_pr_test_res, file="monocle_res.rda")
+```
+
+In the following code chunk the genes from the ```spathial``` experiment with Pearson's correlation score higher than 0.7 and lowest than -0.7 are selected. Then, the genes from the ```Monocle3``` experiment with q-value < 0.05 are selected:  
+```{r}
+spathial_best_genes <- names(spathial_statistics$correlations[which(spathial_statistics$correlations > 0.7 | spathial_statistics$correlations < -0.7)])
+
+load(system.file("extdata", "monocle_res.rda", package = "spathial"))
+monocle_best_genes <- row.names(subset(ciliated_cds_pr_test_res, q_value < 0.05))
+```
+Finally, one compare the two results. In particular, two list of genes are loaded. "Group 2" describes genes whose expression progressively decreased from peak levels in early G1 to low levels in late G2/M and "Group 3" describes genes which gradually increase in expression from G1 toward mitosis. These list are selected from the Karlsson et Al. experiment, which was performed on the data used in this example [CITA].
+With a simple difference, it is possible to find genes belonging to "Group 2" and "Group 3" which are found only by _spathial_.
+
+```{r}
+###Loading Cancer Gene Census
+load(system.file("extdata", "karlsson-genes.rda", package = "spathial"))
+difference <- setdiff(spathial_best_genes, monocle_best_genes)
+difference[which(difference %in% group_2)]
+difference[which(difference %in% group_2)]
+```
+
 # References
 
 [1] M. J. Ferrarotti, W. Rocchia, and S. Decherchi, “Finding Principal Pathsin Data Space,” IEEE Transactions on Neural Networks and LearningSystems, vol. 30, pp. 2449–2462, Aug. 2019
@@ -344,3 +687,7 @@ top_negative_correlations
 [2] L. van der Maaten and G. Hinton, “Viualizing data using t-SNE,” Journal of Machine Learning Research, vol. 9, pp. 2579–2605, Nov. 2008.
 
 [3] T. Cover and P. Hart, “Nearest neighbor pattern classification,” IEEE Transactions on Information Theory, vol. 13, pp. 21–27, Jan. 1967.
+
+[4] Robinson MD, McCarthy DJ, Smyth GK (2010). “edgeR: a Bioconductor package for differential expression analysis of digital gene expression data.” Bioinformatics, 26(1), 139-140. doi: 10.1093/bioinformatics/btp616.
+
+[5] McCarthy DJ, Chen Y, Smyth GK (2012). “Differential expression analysis of multifactor RNA-Seq experiments with respect to biological variation.” Nucleic Acids Research, 40(10), 4288-4297. doi: 10.1093/nar/gks042.

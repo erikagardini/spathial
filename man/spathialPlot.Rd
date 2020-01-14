@@ -4,8 +4,15 @@
 \alias{spathialPlot}
 \title{2D spathial}
 \usage{
-spathialPlot(X, X_labels, boundary_ids, spathial_res,
-  perplexity_value = NULL, mask = NULL, ...)
+spathialPlot(
+  X,
+  X_labels,
+  boundary_ids,
+  spathial_res,
+  perplexity_value = NULL,
+  mask = NULL,
+  ...
+)
 }
 \arguments{
 \item{X}{data points}

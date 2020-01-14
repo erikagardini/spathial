@@ -31,27 +31,35 @@ spathialBoundaryIds <- function(X, X_labels = NULL, mode = 1, from = NULL, to = 
     if(mode == 2){
       stop("With X_labels == NULL, only mode 1 or 3 is allowed")
     }else{
+      X_labels <- rep("waypoints", nrow(X))
       X_labels_or <- NULL
-      X_labels <- rep(1, length=nrow(X))
-      colors <- "blue"
-      pch_val <- 16
+      numeric_labels <- rep(1, nrow(X))
+      colors <- grDevices::rainbow(length(table(numeric_labels)))
+      pch_val <- "o"
     }
   }else{
     if(!is.numeric(X_labels) || !all(X_labels > 0)){
-      stop("Labels must be integer numbers ranging from 1 to the n-th category.")
+      numeric_labels <- as.numeric(as.factor(X_labels))
     }else{
-      X_labels_or <- X_labels
-      colors <- grDevices::rainbow(length(table(X_labels)))
-      pch_val <- as.character(X_labels)
+      numeric_labels = X_labels
     }
+    X_labels_or <- X_labels
+    colors <- grDevices::rainbow(length(table(numeric_labels)))
+    pch_val <- as.character(numeric_labels)
   }
   if(mode == 1){
     if(ncol(X) < 2){
       stop("X should have at least 2 columns")
     }else if(ncol(X) == 2){
-      colors_labels <- sapply(X_labels, function(x){colors[x]})
+      colors_labels <- sapply(numeric_labels, function(x){colors[x]})
+
+      legend_names = c(unique(X_labels), "boundaries", "principal path")
+      legend_color = c(unique(colors_labels), "black", "red")
+      legend_pch = c(unique(pch_val), "x", "♦")
+
       graphics::plot(X[,1],X[,2], col=colors_labels, pch=pch_val, xlab=colnames(X)[1], ylab=colnames(X)[2], main="Click to select path start and end points")
       boundary_ids<-rownames(X)[graphics::identify(X,n=2,plot=FALSE)]
+      graphics::legend("topright", inset=c(-0.35,0), legend=legend_names, col=legend_color, pch=legend_pch)
       graphics::points(
         X[which(rownames(X) == boundary_ids[1]),1], X[which(rownames(X) == boundary_ids[1]),2],pch="x",col="black",cex=4
       )
@@ -62,11 +70,15 @@ spathialBoundaryIds <- function(X, X_labels = NULL, mode = 1, from = NULL, to = 
       tsne_res <- Rtsne::Rtsne(X, dims = 2, perplexity = 30)
       X_2D <- tsne_res$Y
 
-      #colors <- grDevices::rainbow(length(table(X_labels)))
-      colors_labels <- sapply(X_labels, function(x){colors[x]})
+      colors_labels <- sapply(numeric_labels, function(x){colors[x]})
+
+      legend_names = c(unique(X_labels), "boundaries", "principal path")
+      legend_color = c(unique(colors_labels), "black", "red")
+      legend_pch = c(unique(pch_val), "x", "♦")
 
       graphics::plot(X_2D[,1],X_2D[,2], col=colors_labels, pch=pch_val, xlab="tne1",ylab="tne2", main="Click to select path start and end points")
       boundary_ids<-rownames(X)[graphics::identify(X_2D,n=2,plot=FALSE)]
+      graphics::legend("topright", inset=c(-0.35,0), legend=legend_names, col=legend_color, pch=legend_pch)
       graphics::points(
         X_2D[which(rownames(X) == boundary_ids[1]),1], X_2D[which(rownames(X) == boundary_ids[1]),2],pch="x",col="black",cex=4
       )
@@ -99,9 +111,7 @@ spathialBoundaryIds <- function(X, X_labels = NULL, mode = 1, from = NULL, to = 
     }else if(!(to %in% rownames(X))){
       stop("to is not an existing sample")
     }else{
-      starting_point <- X[which(rownames(X) == from),]
-      ending_point <- X[which(rownames(X) == to),]
-      boundary_ids <- rownames(rbind(starting_point, ending_point))
+      boundary_ids <- c(from, to)
     }
   }else{
     stop("Insert a valid mode")
@@ -201,7 +211,7 @@ spathialPrefiltering <- function(X, boundary_ids){
 spathialWay <- function(X, boundary_ids, NC=50){
   spathial_res <- compute_spathial(X, boundary_ids, NC)
   colnames(spathial_res) <- colnames(X)
-
+  rownames(spathial_res) <- paste("ppath",1:nrow(spathial_res))
   return(spathial_res)
 }
 
@@ -318,43 +328,58 @@ spathialLabels <- function(X, X_labels, spathial_res){
 spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_value=NULL, mask=NULL, ...){
   set.seed(123)
   if(is.null(X_labels)){
-    X_labels <- rep(1, length=nrow(X))
-    colors <- "blue"
-    pch_val <- 16
+    X_labels <- rep("waypoints", nrow(X))
+    numeric_labels <- rep(1, nrow(X))
+    colors <- grDevices::rainbow(max(numeric_labels))
+    pch_val <- "o"
   }else{
     if(!is.numeric(X_labels) || !all(X_labels > 0)){
-      stop("Labels must be integer numbers ranging from 1 to the n-th category.")
+      numeric_labels <- as.numeric(as.factor(X_labels))
     }else{
-      colors <- grDevices::rainbow(length(table(X_labels)))
-      pch_val <- as.character(X_labels)
+      numeric_labels = X_labels
     }
+    colors <- grDevices::rainbow(max(numeric_labels))
+    pch_val <- as.character(numeric_labels)
   }
   if(ncol(X) == 2){
-    colors_labels <- sapply(X_labels, function(x){colors[x]})
+    colors_labels <- sapply(numeric_labels, function(x){colors[x]})
     boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
+    if(boundary_ids[1] == boundary_ids[2]){
+      boundaries <- rbind(boundaries, boundaries)
+    }
 
-    graphics::plot(X[,1],X[,2], col=colors_labels, pch=pch_val, xlab=colnames(X)[1], ylab=colnames(X)[1],...)
-    graphics::points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
-    graphics::lines(spathial_res[,1], spathial_res[,2],lwd=3,col="red",type="o",pch=15)
+    graphics::par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+    graphics::plot(X[,1],X[,2], col=colors_labels, pch=pch_val, xlab=colnames(X)[1], ylab=colnames(X)[2], ...)
     if(!is.null(mask)){
       X_garbage <- X[!mask,]
       X_labels_garbage <- X_labels[!mask]
       graphics::points(X_garbage[,1],X_garbage[,2], col="gray", pch="x")
+      legend_names = c(legend_names, "filtered")
+      legend_color = c(legend_color, "black", "gray")
+      legend_pch = c(legend_pch, "x")
     }
+    graphics::points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
+    graphics::lines(spathial_res[,1], spathial_res[,2],lwd=3,col="red",type="o",pch="♦")
+    legend_names = c(as.character(unique(X_labels)), "boundaries", "principal path")
+    legend_color = c(unique(colors_labels), "black", "red")
+    legend_pch = c(unique(pch_val), "x", "♦")
+    graphics::legend("topright", inset=c(-0.35,0), legend=legend_names, col=legend_color, pch=legend_pch)
   }else{
     if(is.null(perplexity_value)){
       perplexity_value<-ceiling(nrow(X)*3/50)
       #message("Perplexity is ",perplexity_value)
     }
-    rownames(spathial_res) <- paste("ppath",1:nrow(spathial_res))
     ppath_labels <- array(data = -1, dim=(nrow(spathial_res)))
-    total_labels <- c(X_labels, ppath_labels)
+    total_labels <- c(numeric_labels, ppath_labels)
     all_points <- rbind(X, spathial_res)
 
     tsne_res <- Rtsne::Rtsne(as.matrix(all_points), dims = 2, perplexity = perplexity_value, check_duplicates=FALSE)
     points_2D <- tsne_res$Y
 
     boundary_ids_2D <- points_2D[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
+    if(boundary_ids[1] == boundary_ids[2]){
+      boundary_ids_2D <- rbind(boundary_ids_2D, boundary_ids_2D)
+    }
     ppath_2D <- points_2D[which(total_labels == -1),]
     #ppath_2D <- rbind(boundary_ids_2D[1,], ppath_2D, boundary_ids_2D[2,])
 
@@ -363,17 +388,25 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
     if(!is.null(mask)){
       X_2D <- points_2D[mask,]
       X_garbage_2D <- points_2D[!mask, ]
-      X_labels <- X_labels[mask]
+      numeric_labels <- numeric_labels[mask]
     }
 
-    colors_labels <- sapply(X_labels, function(x){colors[x]})
+    colors_labels <- sapply(numeric_labels, function(x){colors[x]})
 
-    graphics::plot(points_2D[,1],points_2D[,2], xlab="tsne1", ylab="tsne2", col=colors_labels, pch=pch_val,...)
-    graphics::points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="black",cex=4)
-    graphics::lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch=15)
+    graphics::par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
+    graphics::plot(points_2D[,1],points_2D[,2], xlab="tsne1", ylab="tsne2", col=colors_labels, pch=pch_val)
     if(!is.null(mask)){
       graphics::points(X_garbage_2D[,1],X_garbage_2D[,2], col="gray", pch="x")
+      legend_names = c(legend_names, "filtered")
+      legend_color = c(legend_color, "black", "gray")
+      legend_pch = c(legend_pch, "x")
     }
+    graphics::points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="black",cex=4)
+    graphics::lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch="♦")
+    legend_names = c(as.character(unique(X_labels)), "boundaries", "principal path")
+    legend_color = c(unique(colors_labels), "black", "blue")
+    legend_pch = c(unique(pch_val),"x", "♦")
+    graphics::legend("topright", inset=c(-0.35,0), legend=legend_names, col=legend_color, pch=legend_pch)
   }
 }
 
@@ -412,7 +445,7 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
 #' statistics <- spathialStatistics(spathial_res)
 #' @export
 spathialStatistics <- function(spathial_res){
-  correlations <- sapply(spathial_res, function(x){
+  correlations <- apply(spathial_res, 2, function(x){
     if(stats::sd(x) == 0){
       return(0)
     }else{
