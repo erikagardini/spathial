@@ -11,6 +11,7 @@ spathialPlot(
   spathial_res,
   perplexity_value = NULL,
   mask = NULL,
+  title = NULL,
   ...
 )
 }
@@ -26,6 +27,8 @@ spathialPlot(
 \item{perplexity_value}{the value for TSNE perplexity (default is nrsamples*3/50)}
 
 \item{mask}{the mask of the sample to preserve (when prefiltering is computed)}
+
+\item{title}{the title of the plot}
 
 \item{...}{Parameters which will be inherited by plot()}
 }
@@ -58,7 +61,7 @@ boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
 X <- boundaryRes$X
 X_labels <- boundaryRes$X_labels
 boundary_ids <- boundaryRes$boundary_ids
-# Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
+# Run spathial spathialPrefiltering with the output of the function spathialBoundaryIds
 filterRes <- spathialPrefiltering(X, boundary_ids)
 #Set the number of waypoints
 NC <- 20

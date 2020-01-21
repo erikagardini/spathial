@@ -17,6 +17,8 @@ A list of objects
   correlation coefficient is provided)
   \item ranks: ranks of associations between the n features and the path (when ppath_perturbed
   is not NULL, the mean of the ranks is provided)
+  \item p_values
+  \item p_adj
 }
 }
 \description{

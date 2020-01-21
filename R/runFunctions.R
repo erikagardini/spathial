@@ -286,6 +286,7 @@ spathialLabels <- function(X, X_labels, spathial_res){
 #' @param spathial_res principal path from the starting point to the ending point
 #' @param perplexity_value the value for TSNE perplexity (default is nrsamples*3/50)
 #' @param mask the mask of the sample to preserve (when prefiltering is computed)
+#' @param title the title of the plot
 #' @param ... Parameters which will be inherited by plot()
 #' @examples
 # Load data matrix X
@@ -314,7 +315,7 @@ spathialLabels <- function(X, X_labels, spathial_res){
 #' X <- boundaryRes$X
 #' X_labels <- boundaryRes$X_labels
 #' boundary_ids <- boundaryRes$boundary_ids
-#' # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
+#' # Run spathial spathialPrefiltering with the output of the function spathialBoundaryIds
 #' filterRes <- spathialPrefiltering(X, boundary_ids)
 #' #Set the number of waypoints
 #' NC <- 20
@@ -325,8 +326,11 @@ spathialLabels <- function(X, X_labels, spathial_res){
 #' #Run spathialPlot with spathial_res
 #' spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value=30, mask)
 #' @export
-spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_value=NULL, mask=NULL, ...){
+spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_value=NULL, mask=NULL, title = NULL, ...){
   set.seed(123)
+  if(is.null(title)){
+    title <- "2d data visualization"
+  }
   if(is.null(X_labels)){
     X_labels <- rep("waypoints", nrow(X))
     numeric_labels <- rep(1, nrow(X))
@@ -348,8 +352,12 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
       boundaries <- rbind(boundaries, boundaries)
     }
 
+    legend_names = c(as.character(unique(X_labels)), "boundaries", "principal path")
+    legend_color = c(unique(colors_labels), "black", "red")
+    legend_pch = c(unique(pch_val), "x", "*")
+
     graphics::par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-    graphics::plot(X[,1],X[,2], col=colors_labels, pch=pch_val, xlab=colnames(X)[1], ylab=colnames(X)[2], ...)
+    graphics::plot(X[,1],X[,2], col=colors_labels, pch=pch_val, xlab=colnames(X)[1], ylab=colnames(X)[2], main = title)
     if(!is.null(mask)){
       X_garbage <- X[!mask,]
       X_labels_garbage <- X_labels[!mask]
@@ -359,10 +367,7 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
       legend_pch = c(legend_pch, "x")
     }
     graphics::points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
-    graphics::lines(spathial_res[,1], spathial_res[,2],lwd=3,col="red",type="o",pch="♦")
-    legend_names = c(as.character(unique(X_labels)), "boundaries", "principal path")
-    legend_color = c(unique(colors_labels), "black", "red")
-    legend_pch = c(unique(pch_val), "x", "♦")
+    graphics::lines(spathial_res[,1], spathial_res[,2],lwd=3,col="red",type="o",pch="*")
     graphics::legend("topright", inset=c(-0.35,0), legend=legend_names, col=legend_color, pch=legend_pch)
   }else{
     if(is.null(perplexity_value)){
@@ -392,9 +397,12 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
     }
 
     colors_labels <- sapply(numeric_labels, function(x){colors[x]})
+    legend_names = c(as.character(unique(X_labels)), "boundaries", "principal path")
+    legend_color = c(unique(colors_labels), "black", "blue")
+    legend_pch = c(unique(pch_val),"x", "*")
 
     graphics::par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-    graphics::plot(points_2D[,1],points_2D[,2], xlab="tsne1", ylab="tsne2", col=colors_labels, pch=pch_val)
+    graphics::plot(points_2D[,1],points_2D[,2], xlab="tsne1", ylab="tsne2", col=colors_labels, pch=pch_val, main=title)
     if(!is.null(mask)){
       graphics::points(X_garbage_2D[,1],X_garbage_2D[,2], col="gray", pch="x")
       legend_names = c(legend_names, "filtered")
@@ -402,10 +410,7 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
       legend_pch = c(legend_pch, "x")
     }
     graphics::points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="black",cex=4)
-    graphics::lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch="♦")
-    legend_names = c(as.character(unique(X_labels)), "boundaries", "principal path")
-    legend_color = c(unique(colors_labels), "black", "blue")
-    legend_pch = c(unique(pch_val),"x", "♦")
+    graphics::lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch="*")
     graphics::legend("topright", inset=c(-0.35,0), legend=legend_names, col=legend_color, pch=legend_pch)
   }
 }
@@ -422,6 +427,8 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
 #'   correlation coefficient is provided)
 #'   \item ranks: ranks of associations between the n features and the path (when ppath_perturbed
 #'   is not NULL, the mean of the ranks is provided)
+#'   \item p_values
+#'   \item p_adj
 #'}
 #' @examples
 #' # Load data matrix X
@@ -457,9 +464,22 @@ spathialStatistics <- function(spathial_res){
   ranks <- rank(-correlations)
   names(ranks)<-colnames(spathial_res)
 
+  p_values <- apply(spathial_res, 2, function(x){
+    if(stats::sd(x) == 0){
+      return(0)
+    }else{
+      stats::cor.test(x, c(1:length(x)))$p.value
+    }
+  })
+  p_values<-unlist(p_values)
+  names(p_values)<-colnames(spathial_res)
+  p_adj <- p.adjust(p_values,method="BH")
+
   outlist<-list(
     correlations=correlations,
-    ranks=ranks
+    ranks=ranks,
+    p_values=p_values,
+    p_adj=p_adj
   )
   return(outlist)
 }
