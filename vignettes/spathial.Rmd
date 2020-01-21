@@ -13,11 +13,11 @@ knitr::opts_chunk$set(fig.width=7, fig.height=5)
 ```
 The _spathial_ package is a generic tool for manifold analysis. It allows to infer a relevant transition or evolutionary path which can highlights the features involved in a specific process. _spathial_ can be useful in all the scenarios where the temporal evolution is the main problem (e.g. tumor progression).  
 
-The _spathial_ package implements the principal path algorithm [1] and allows to navigate a n-dimensional space. The input of the algorithm are two points, which represent the boundary condition of the algorithm: the start and the end points. Given the boundaries, the algorithm learns a smooth transition path connecting them. Along the path there are new intermediate data samples which gradually morphs from the start point to the end point.
+The _spathial_ package implements the principal path algorithm [1] and allows to navigate a n-dimensional space. The input of the algorithm are two points, which represent the boundary condition of the algorithm: the starting and the ending points. Given the boundaries, the algorithm learns a smooth transition path connecting them. Along the path there are new intermediate data samples which gradually morphs from the starting point to the ending point.
 In this way it is possible to move from two known states and analize which features are involved in the transition from the two states.
-The workflow for constructing the path is composed of few steps. Firstly, it is necessary to choose the start and the end points. _spathial_ provides three different alternatives to do that (which will be discussed later), but the user can additionally choose their own strategy. The second step consist in prefiltering the data. This step is non strictly necessary to construct the path, but allows to obtain a local solution removing some of the data points. In this way, the solution is based on a restricted number of samples. Finally, it is possible to compute the principal path algorithm. 
+The workflow for constructing the path is composed of few steps. Firstly, it is necessary to choose the starting and the ending points. _spathial_ provides three different alternatives to do that (which will be discussed later), but the user can additionally choose their own strategy. The second step consist in prefiltering the data. This step is non strictly necessary to construct the path, but allows to obtain a local solution removing some of the data points. In this way, the solution is based on a restricted number of samples. Finally, it is possible to compute the principal path algorithm. 
 
-_spathial_ additionally provides functions to analize the path. In particular it allows to plot data in 2d using the t-SNE algorithm [2] for dimensionality reduction, to learn the labels corresponding to each path's intermediate points using the kNN algorithm [3] and to compute the statistics (Pearson's correlation and rank). The latter allows to find the features involved in the transition process from the start point to the end point.
+_spathial_ additionally provides functions to analize the path. In particular it allows to plot data in 2d using the t-SNE algorithm [2] for dimensionality reduction, to learn the labels corresponding to each path's intermediate points using the kNN algorithm [3] and to compute the statistics (Pearson's correlation, rank, p_value and q_value). The latter allows to find the features involved in the transition process from the start point to the end point.
 
 The next sections describes how to use _spathial_ and provides some examples.
 
@@ -63,8 +63,7 @@ This is how the data matrix ```X``` should look like at this point
 head(X)
 ```
 
-The sample labels vector ```X_labels```, assigns categories to each sample,
-coherently with rows order in ```X``` 
+The sample labels vector ```X_labels```, assigns categories to each sample, coherently with rows order in ```X``` 
 ```{r}
 head(X_labels)
 ```
@@ -86,8 +85,7 @@ legend("topright", inset=c(-0.25,0), legend=legend_names, col=legend_color, pch=
 
 ## Step 1: select the boundaries
 The first step to compute the principal path consists in selecting the starting and the ending points. 
-The package _spathial_ has the function ```spathialBoundaryIds``` which takes as input the matrix ```X```, 
-the corresponding labels ```X_labels``` (or NULL) and the parameters ```mode```, ```from``` and ```to```.
+The package _spathial_ has the function ```spathialBoundaryIds``` which takes as input the matrix ```X```, the corresponding labels ```X_labels``` (or NULL) and the parameters ```mode```, ```from``` and ```to```.
 
 The parameter ```mode``` can assume of one the following values:
 
@@ -104,7 +102,7 @@ The output of the function ```spathialBoundaryIds``` is a list with the followin
 
 __N.B.__ The matrix ```X``` and the vector ```X_labels``` change only when ```mode=2``` (the resulting matrix and vector have two additional elements, corresponding to the centroids).
 
-User can choose the start and the end point with their own strategy, which can be more suitable for their specific problem; in this case, the user should run the function ```spathialBoundaryIds``` with ```mode=3``` specifing the rownames of the samples using the parameters ```from``` and ```to```.
+User can choose the starting and the ending points with their own strategy, which can be more suitable for their specific problem; in this case, the user should run the function ```spathialBoundaryIds``` with ```mode=3``` specifing the rownames of the samples using the parameters ```from``` and ```to```.
 
 The following code chunks show how to use the function ```spathialBoundaryIds```, with different values of the parameter ```mode```, and how to extract the output:
 
@@ -121,10 +119,9 @@ boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=2, from="c3", t
 # mode=3 (From named sample to another named sample)
 boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=3,
                                                from="sample123", to="sample456")
+```
+Once the boundaries are defined, and only in the case of ```mode=2```, the ```X``` and ```X_labels``` objects inside the boundary_init object contain extra meta-samples (the boundaries) and thus the original ```X``` and ```X_labels``` need to be updated accordingly:
 
-Once the boundaries are defined, and only in the case of ```mode=2```, the ```X``` and ```X_labels``` objects 
-inside the boundary_init object contain extra meta-samples (the boundaries) and thus the original ```X``` and ```X_labels``` need to be updated
-accordingly
 ``` {r}
 # Take the output from the variable boundary_init
 boundary_ids<-boundary_init$boundary_ids
@@ -146,8 +143,7 @@ legend("topright", inset=c(-0.3,0), legend=legend_names, col=legend_color, pch=l
 ```
 
 ## Step 3: prefiltering (optional)
-The principal path algorithm is intrinsically global. If one is searching for a path which does not involve the whole dataset, one 
-can run the function ```spathialPrefiltering```  before the principal path algorithm is applied. 
+The principal path algorithm is intrinsically global. If one is searching for a path which does not involve the whole dataset, one can run the function ```spathialPrefiltering```  before the principal path algorithm is applied. 
 If one wants to run _spathial_ on the entire dataset, this filtering procedure is not due.
 
 The function ```spathialPrefiltering``` takes as input the matrix ```X``` and the boundaries ```boundary_ids``` which are the result of the function ```spathialBoundaryIds```.
@@ -196,7 +192,7 @@ legend("topright", inset=c(-0.3,0), legend=legend_names, col=legend_color, pch=l
 ## Step 4: principal path
 The function ```spathialWay``` run the principal path algorithm and gives as output the waypoints points. It takes as input the matrix ```X```, the boundaries ```boundary_ids``` and the parameter ```NC```, which is the desired number of waypoints of the resulting principal path. For example, given ```NC=10``` the resulting path will be composed of 10 waypoints plus the starting and the ending points. 
 
-The output of the function ```spathialWay``` is the variable ```spathial_res``` , which contains the coordinates of the waypoints of the principal path;   
+The output of the function ```spathialWay``` is the variable ```spathial_res```, which contains the coordinates of the waypoints of the principal path;   
 
 The following code shows how to use the function ```spathialWay```, with or without prefiltering, and how to get the output:
 
@@ -220,8 +216,7 @@ The next subsection shows how to get results from the output object ```spathial_
 The package _spathial_ includes three different functions to interpret the output of the principal path algorithm: ```spathialPlot```, ```spathialLables``` and ```spathialStatistics```. The following subsections describe what they do and how to use each of them.
 
 ### Plot principal path
-The function ```spathialPlot``` plots the principal path together with all the data points (either filtered or not filtered) together 
-with the boundaries. This function takes as input the matrix ```X``` (the initial version), the vector ```X_labels``` (or NULL), the boundaries ```boundary_ids```, the output of the principal path algorithm ```spathial_res```, the parameter ```perplexity value``` (default 30) and the parameter ```mask``` which is one of the results of the prefiltering and it is ```NULL``` when the prefiltering is not computed.
+The function ```spathialPlot``` plots the principal path together with all the data points (either filtered or not filtered) together with the boundaries. This function takes as input the matrix ```X``` (the initial version), the vector ```X_labels``` (or NULL), the boundaries ```boundary_ids```, the output of the principal path algorithm ```spathial_res```, the parameter ```perplexity value``` (default 30), the parameter ```mask``` which is one of the results of the prefiltering and it is ```NULL``` when the prefiltering is not computed and the parameter ```title``` which is the title of the plot and can be ```NULL```.
 When the input matrix ```X``` has more than 2 columns, the function reduce the dimension of the space from N (>2) to 2 using the t-SNE algorithm [2].
 
 The following code shows how to use the function ```spathialPlot``` with the path generated during the previous step (with or without prefiltering):
@@ -279,6 +274,8 @@ For this reason, the output of the function ```spathialStatistics``` is a list t
 
 * __correlations__: This vector contains the Pearson's correlation coefficients between each feature and the path.
 * __rank_scores__: This vector contains the ranks of associations between the n features and the path (1 being the most positively correlated, and n the most negatively correlated).
+* __p_value__: This vector contains the p values from the Pearson's correlation scores.
+* __p_adj__: This vector containes the p values adjusted according to the Benjamini & Hochberg (BH) method.
 
 The following code shows how to use the function ```spathialStatistics``` and to extract the correlation-based association between features and the path.
 
@@ -299,7 +296,7 @@ statistics$correlations
 # A slightly more complex example
 In this section it is shown a higher-dimensional example, with 100 features. In this case the input matrix ```X``` is a reduced version of the TCGA Liver Cancer RNA-Seq dataset which is composed only by the 100 features (gene expression profiles, RPM-normalized) with the highest variance across the dataset. The vector ```X_labels``` contains the information about the samples. In particular, the label is "Tumor" for tumor samples, and "Normal" for normal samples, collected in the same dataset.
 
-In this case, the aim of the example is to navigate the space from the centroid of the normal tissue samples (label "Normal") to the centroid of the tumor samples (label "Tumor") in order to gradually morphing from one histological state to the other. __For this reason, one can use the function ```spathialBoundaries``` with ```mode=2``` specifying ```from="Normal"``` and ```to="Tumor"```. __
+In this case, the aim of the example is to navigate the space from the centroid of the normal tissue samples (label "Normal") to the centroid of the tumor samples (label "Tumor") in order to gradually morphing from one histological state to the other. For this reason, one can use the function ```spathialBoundaries``` with ```mode=2``` specifying ```from="Normal"``` and ```to="Tumor"```.
 
 The prefiltering won't be executed since one is searching for a global solution.
 
@@ -313,6 +310,7 @@ data[1:4,1:5]
 ```
 
 Then one transforms it into two objects: the numeric gene expression profiles (```X```) and the associations between samples and samples category (```X_labels```), where "Tumor" indicates a tumor sample, and "Normal" a normal tissue sample.
+
 ```{r}
 X <- data[,1:(ncol(data)-1)]
 X_labels <- data[,"Category"]
@@ -358,8 +356,8 @@ Then one can quickly extract the gene expression profiles most correlated with t
 statistics<-spathialStatistics(spathial_res)
 ```
 In this case, the statistic is particularly interesting, as it shows the most associated the functional genes to the transition between normal and tumor liver tissues. 
-In fact, it contains information about the correlation between each feature (genes) and a vector from 1 to NC+2 (where NC is the number of waypoints)
-that represents the progression along the path.  This helps finding the genes particularly involved with the evolution from the healthy to the unhealthy state. The following code highlights the 10 most positively and most negatively associated genes to the normal-tumor path progression:
+In fact, it contains information about the correlation between each feature (genes) and a vector from 1 to NC+2 (where NC is the number of waypoints) that represents the progression along the path.
+This helps finding the genes particularly involved with the evolution from the healthy to the unhealthy state. The following code highlights the 10 most positively and most negatively associated genes to the normal-tumor path progression:
 ```{r}
 singlepath_correlations<-statistics$correlations
 top_positive_correlations<-sort(singlepath_correlations,decreasing=TRUE)[1:10]
@@ -371,7 +369,7 @@ top_negative_correlations
 # A real case study
 
 In this section it is shown a real case study on TCGA Lung Cancer RNA-Seq dataset. In this case the input matrix ```X``` is the fully TCGA Lung Cancer RNA-Seq dataset, with 19637 features (gene expression profiles, RPM-normalized) and 562 samples. Each column of our matrix ```X``` represents a feature and each row is the gene expression profile of a specific sample. The vector ```X_labels``` contains the annotations of the samples ("Tumor" or "Normal") which can be extracted from the TCGA barcode.
-We provide an ```.rda``` file with both the ```X``` and ```X_labels```. You can simply load it by computing the following command.
+We provide an ```.rda``` file with both the ```X``` and ```X_labels```. One can simply load it by computing the following command.
 
 ```{r}
 myfile<-system.file("extdata", "luad_tcga.rda", package = "spathial")
@@ -381,7 +379,7 @@ load(myfile)
 The aim of the example is to navigate the space from the normal samples to the tumor samples.
 
 In this case, the start point is the more distant normal sample from the tumor centroid and the end point is the more distant tumor sample from the normal centroid. 
-(Explanation?)  
+These start and end points are selected because we were searching for the extremes, conceptually the most normal sample and the most not normal sample.
 
 Since this is not an existing ```spathialBoundaries``` mode, one can extract the rownames of the starting and the ending points, then one can use the function ```spathialBoundaries``` with ```mode=3``` and setting ```from``` and ```to``` respectively equal to the rownames of the starting and the ending points.
 
@@ -438,17 +436,17 @@ spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value
 ```
 Since in this example we have a n-dimensional space (with n = 19637), a dimensionality reduction strategy is necessary to plot the principal path algorithm. _spathial_ uses the t-SNE algorithm [2]. 
 
-The _spathial_ method ```spathialStatistics``` can be used to calculate the Pearson's correlation coefficients and rank the genes according to the correlation scores: 
+The _spathial_ method ```spathialStatistics``` can be used to calculate the Pearson's correlation coefficients, the p values, the adjusted p values and rank the genes according to the correlation scores: 
 ```{r}
 spathial_statistics <- spathial::spathialStatistics(spathial_res)
 ```
 
-In this way it is possible to find the genes involved in the transition from "Normal" to "Tumor".
+In this way it is possible to find the genes involved in the transition from "Normal" to "Tumor" (genes with high correlation coeffients or with significant p values). 
 
 # An example with Single-cell RNA-Seq data
 
-In this section it is shown a real case study on the Karlsson Single-cell RNA-Seq dataset. In this case the input matrix ```X``` is composed by 23928 features (genes) and 96 samples. Each column of our matrix ```X``` represents a feature and each row is the gene expression profile of a specific cell. The vector ```X_labels``` contains the annotations of the cell ("G1", "S" or "G2/M") which describes the phase of the cell cycle.
-We provide an ```.rda``` file with both the ```X``` and ```X_labels```. You can simply load it by computing the following commands.
+In this section it is shown a real case study on the Karlsson Single-cell RNA-Seq dataset [4]. In this case the input matrix ```X``` is composed by 23928 features (genes) and 96 samples. Each column of our matrix ```X``` represents a feature and each row is the gene expression profile of a specific cell. The vector ```X_labels``` contains the annotations of the cell ("G1", "S" or "G2/M") which describes the phase of the cell cycle.
+We provide an ```.rda``` file with both the ```X``` and ```X_labels```. Users can simply load it by computing the following commands.
 
 ```{r}
 data <- system.file("extdata", "karlsson-rawcounts.rda", package = "spathial")
@@ -470,10 +468,9 @@ X_labels <- annotation
 The aim of the example is to navigate the space from the "G1" phase to the "G2/M" phase in order to find the genes involved in the cell cycle.
 
 In this case, the start point is the centroid of the "G1" cells and the end point is the centroid of the "G2" cells. 
-
 This is an existing ```spathialBoundaries``` mode, therefore the function ```spathialBoundaries``` can be used with ```mode=2``` and the parameters ```from``` and ```to``` respectively equal to "G1" and "G2".
 
-The following code block shows how to find set the boundaries:
+The following code block shows how to set the boundaries:
 ```{r}
 boundaries <- spathial::spathialBoundaryIds(X, X_labels, mode=2, from="G1", to="G2/M")
 boundary_ids<-boundaries$boundary_ids
@@ -486,24 +483,23 @@ The next step consists in computing the principal path algorithm using the _spat
 
 ```{r results='hide'}
 spathial_res <- spathial::spathialWay(X, boundary_ids, NC = 50)
-spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value = 30, mask = NULL)
 ```
 
 Each waypoint is a new cell which is sligthly different from the previous one and all of them are topologically connected via a chain of springs.
 
-Finally, one can use the _spathial_ method to plot the path as follow:
+Finally, one can use the _spathial_ method ```spathialPlot``` to plot the path as follow:
 ```{r}
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value = 30, mask = NULL)
 ```
 
 Since in this example we have a n-dimensional space (with n = 23928), a dimensionality reduction strategy is necessary to plot the principal path algorithm. _spathial_ uses the t-SNE algorithm [2]. 
 
-The _spathial_ method ```spathialStatistics``` can be used to calculate the Pearson's correlation coefficients and rank the genes according to the correlation scores: 
+The _spathial_ method ```spathialStatistics``` can be used to calculate the Pearson's correlation coefficients, the p values, the adjusted p values and rank the genes according to the correlation scores: 
 ```{r}
 spathial_statistics <- spathial::spathialStatistics(spathial_res)
 ```
 
-In this way it is possible to find the genes involved in the transition from "G1" to "G2/M".
+In this way it is possible to find the genes involved in the transition from "G1" to "G2/M" (genes with high correlation coeffients or with significant p values).
 
 # References
 
@@ -512,3 +508,5 @@ In this way it is possible to find the genes involved in the transition from "G1
 [2] L. van der Maaten and G. Hinton, “Viualizing data using t-SNE,” Journal of Machine Learning Research, vol. 9, pp. 2579–2605, Nov. 2008.
 
 [3] T. Cover and P. Hart, “Nearest neighbor pattern classification,” IEEE Transactions on Information Theory, vol. 13, pp. 21–27, Jan. 1967.
+
+[4] Karlsson, J., Kroneis, T., Jonasson, E., Lekholm, E., and St ̊ahlberg, A .(2017). Transcriptomic characterization of the human cell cycle in individualunsynchronized cells. Journal of Molecular Biology, 429.

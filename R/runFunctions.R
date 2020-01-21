@@ -55,7 +55,7 @@ spathialBoundaryIds <- function(X, X_labels = NULL, mode = 1, from = NULL, to = 
 
       legend_names = c(unique(X_labels), "boundaries", "principal path")
       legend_color = c(unique(colors_labels), "black", "red")
-      legend_pch = c(unique(pch_val), "x", "♦")
+      legend_pch = c(unique(pch_val), "x", "*")
 
       graphics::plot(X[,1],X[,2], col=colors_labels, pch=pch_val, xlab=colnames(X)[1], ylab=colnames(X)[2], main="Click to select path start and end points")
       boundary_ids<-rownames(X)[graphics::identify(X,n=2,plot=FALSE)]
@@ -74,7 +74,7 @@ spathialBoundaryIds <- function(X, X_labels = NULL, mode = 1, from = NULL, to = 
 
       legend_names = c(unique(X_labels), "boundaries", "principal path")
       legend_color = c(unique(colors_labels), "black", "red")
-      legend_pch = c(unique(pch_val), "x", "♦")
+      legend_pch = c(unique(pch_val), "x", "*")
 
       graphics::plot(X_2D[,1],X_2D[,2], col=colors_labels, pch=pch_val, xlab="tne1",ylab="tne2", main="Click to select path start and end points")
       boundary_ids<-rownames(X)[graphics::identify(X_2D,n=2,plot=FALSE)]
@@ -427,8 +427,8 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
 #'   correlation coefficient is provided)
 #'   \item ranks: ranks of associations between the n features and the path (when ppath_perturbed
 #'   is not NULL, the mean of the ranks is provided)
-#'   \item p_values
-#'   \item p_adj
+#'   \item p_values: p values from the Pearson’s correlation scores
+#'   \item p_adj: p values adjusted according to the Benjamini & Hochberg (BH) method
 #'}
 #' @examples
 #' # Load data matrix X
@@ -473,7 +473,7 @@ spathialStatistics <- function(spathial_res){
   })
   p_values<-unlist(p_values)
   names(p_values)<-colnames(spathial_res)
-  p_adj <- p.adjust(p_values,method="BH")
+  p_adj <- stats::p.adjust(p_values,method="BH")
 
   outlist<-list(
     correlations=correlations,
