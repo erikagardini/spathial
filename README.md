@@ -19,7 +19,7 @@ devtools::install_github("erikagardini/spathial", build_vignettes=TRUE)
 
 ### Step 3: load _spathial_
 ```
-library("spathial")
+library(spathial)
 ```
 
 ## Hot to use _spathial_
