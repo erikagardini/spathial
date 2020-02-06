@@ -14,7 +14,7 @@ install.packages("devtools")
 Install _spathial_ from GitHub using the following code, where you need to remember to list both the author and the name of the package. All the dependencies are automatically installed.
 ```
 library(devtools)
-install_github("erikagardini/spathial")
+devtools::install_github("erikagardini/spathial", build_vignettes=TRUE)
 ```
 
 ### Step 3: load _spathial_
@@ -26,7 +26,7 @@ library(spathial)
 
 A long-form guide to _spathial_ can be found with the following command. Our vignette describes the problem that _spathial_ is designed to solve, and then show how to solve it. We demonstrate how to coordinate multiple functions to solve problems and we explain the details of our package.
 ```
-vignette(spathial)
+vignette("spathial")
 ```
 
 ![_spathial_ Logo](inst/extras/logo_spathial.png)
