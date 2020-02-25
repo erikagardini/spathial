@@ -17,8 +17,8 @@ A list of objects
   correlation coefficient is provided)
   \item ranks: ranks of associations between the n features and the path (when ppath_perturbed
   is not NULL, the mean of the ranks is provided)
-  \item p_values
-  \item p_adj
+  \item p_values: p values from the Pearson’s correlation scores
+  \item p_adj: p values adjusted according to the Benjamini & Hochberg (BH) method
 }
 }
 \description{

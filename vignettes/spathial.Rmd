@@ -29,7 +29,10 @@ In this section the most basic steps to run the _spathial_ implementation of the
 
 The very first step is the _spathial_ package installation
 ```{r eval=FALSE}
-install.packages("spathial")
+if (!requireNamespace("devtools", quietly = TRUE))
+    install.packages("devtools")
+
+devtools::install_github("erikagardini/spathial", build_vignettes=TRUE)
 ```
 
 And its loading:
