@@ -59,8 +59,7 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
     as.matrix(init_W)
   )
   XW_dst<-XW_dst^2
-  u<-colnames(XW_dst)[apply(XW_dst,1,which.min)] # What is u?
-
+  u<-colnames(XW_dst)[apply(XW_dst,1,which.min)]
 
   ### Iterate the minimizer
   names_of_rows<-rownames(B)
@@ -180,7 +179,6 @@ rkm_MS_pathvar <- function(models, s_span, X){
     W=as.matrix(W)
     W_diff <- W[2:nrow(W),] - W[1:(nrow(W)-1),]
     W_dst=apply(W_diff, 1, function(x) norm(as.matrix(x),"F"))
-    #varp <- function(x) mean((x-mean(x))^2) #TODO: create a function
     W_dst_var[i] = pvar(W_dst)
   }
   return(W_dst_var)

@@ -29,10 +29,7 @@ In this section the most basic steps to run the _spathial_ implementation of the
 
 The very first step is the _spathial_ package installation
 ```{r eval=FALSE}
-if (!requireNamespace("devtools", quietly = TRUE))
-    install.packages("devtools")
-
-devtools::install_github("erikagardini/spathial", build_vignettes=TRUE)
+install.packages("spathial")
 ```
 
 And its loading:
@@ -348,6 +345,7 @@ spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res,
 # Labels for each waypoint with knn
 ppath_labels <- spathial::spathialLabels(X, X_labels, spathial_res)
 # Plot the results
+colors <- rainbow(length(table(as.numeric(as.factor(X_labels)))))
 ppath_labels <- as.vector(ppath_labels)
 colors_labels_ppath <- sapply(ppath_labels, function(y){colors[as.integer(y)]})
 plot(c(1:length(ppath_labels)), c(ppath_labels), col=colors_labels_ppath,
@@ -378,11 +376,7 @@ In this section it is shown a real case study on TCGA Lung Cancer RNA-Seq datase
 We provide an ```.rda``` file with both the ```X``` and ```X_labels```. One can simply load it by computing the following command.
 
 ```{r}
-#myfile<-system.file("extdata", "luad_tcga.rda", package = "spathial")
-#load(myfile)
-dataframe <- readRDS(url("https://github.com/erikagardini/spathial/raw/master/inst/extdata/luad_tcga.rds"))
-X <- data[,1:(ncol(data)-1)]
-X_labels <- data[,"Category"]
+load(url("https://github.com/erikagardini/spathial_dataframes/raw/master/luad_tcga.rda"))
 ```
 
 The aim of the example is to navigate the space from the normal samples to the tumor samples.
@@ -439,8 +433,7 @@ Each waypoint is a new gene profile which is sligthly different from the previou
 
 The _spathial_ method ```spathialPlot``` can be used to visualize the path.
 ```{r}
-my_res<-system.file("extdata", "spathial_res.rda", package = "spathial")
-load(my_res)
+load(url("https://github.com/erikagardini/spathial_dataframes/raw/master/spathial_res.rda"))
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value = 30, mask = NULL)
 ```
 Since in this example we have a n-dimensional space (with n = 19637), a dimensionality reduction strategy is necessary to plot the principal path algorithm. _spathial_ uses the t-SNE algorithm [2]. 
@@ -458,8 +451,7 @@ In this section a real case study is shown on the Karlsson Single-cell RNA-Seq d
 We provide an ```.rda``` file with both the ```X``` and ```X_labels```. Users can simply load it by computing the following commands.
 
 ```{r}
-data <- system.file("extdata", "karlsson-rawcounts.rda", package = "spathial")
-load(data)
+load(url("https://github.com/erikagardini/spathial_dataframes/raw/master/karlsson-rawcounts.rda"))
 
 #NORMALIZATION AND PREFILTERING OF THE DATA (GENES IN AT LEAST 3 CELLS)
 #library(Seurat)
@@ -467,9 +459,8 @@ load(data)
 #normalized_seuset<-NormalizeData(seuset,normalization.method="LogNormalize",scale.factor=10000)
 #normalized_expmat <- as.matrix(normalized_seuset[["RNA"]]@data)
 #save(normalized_expmat,annotation,file="karlsson-normalized_expmat.rda")
-normalized_expmat<-system.file("extdata", "karlsson-normalized_expmat.rda", package = "spathial")
-load(normalized_expmat)
 
+load(url("https://github.com/erikagardini/spathial_dataframes/raw/master/karlsson-normalized_expmat.rda"))
 X <- t(normalized_expmat)
 X_labels <- annotation
 ```
