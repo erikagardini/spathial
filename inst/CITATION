@@ -2,16 +2,16 @@ citHeader("Please, cite the following reference:")
 
 citEntry(entry="article",
 	author = c(person(c("Erika"),"Gardini"),
-	           person(c("Federico","M"), "Giorgi"),
-	           person("Andrea","Cavallo"),
-		   person("Sergio", "Decherchi")),
-	title = "spathial: and R package for path progression in data space",
+	           person(c("Federico","M."), "Giorgi"),
+	           person("Sergio", "Decherchi"),
+	           person("Andrea","Cavalli")),
+	title = "Spathial: an R package for the evolutionary analysis of biological data",
 	journal = "Bioinformatics",
-	year = 2019,
-	volume = 1,
-	number = 1,
-	pages = "123-124",
+	year = "",
+	volume = "",
+	number = "",
+	pages = "",
 
-	textVersion = "Gardini, E., Giorgi, F.M., Cavalli,A., and Decherchi, S. (2020) spathial: and R package for path progression in data space"
+	textVersion = "Gardini, E., Giorgi, F.M., Decherchi, S., and Cavalli, A. (2020) Spathial: an R package for the evolutionary analysis of biological data"
 )
 
