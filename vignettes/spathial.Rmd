@@ -378,10 +378,8 @@ In this section it is shown a real case study on TCGA Lung Cancer RNA-Seq datase
 We provide an ```.rda``` file with both the ```X``` and ```X_labels```. One can simply load it by computing the following command.
 
 ```{r}
-#myfile<-system.file("extdata", "luad_tcga.rda", package = "spathial")
-#load(myfile)
-my_file <- "https://github.com/erikagardini/spathial/blob/master/inst/extdata/luad_tcga.rda"
-load(url(my_file))
+myfile<-system.file("extdata", "luad_tcga.rda", package = "spathial")
+load(myfile)
 ```
 
 The aim of the example is to navigate the space from the normal samples to the tumor samples.
