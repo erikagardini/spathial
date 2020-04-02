@@ -11,7 +11,9 @@ vignette: >
 ```{r echo=FALSE}
 knitr::opts_chunk$set(fig.width=7, fig.height=5) 
 ```
-The _spathial_ package is a generic tool for manifold analysis. It allows to infer a relevant transition or evolutionary path which can highlights the features involved in a specific process. _spathial_ can be useful in all the scenarios where the temporal (or pseudo-temporal) evolution is the main problem (e.g. tumor progression).  
+The _spathial_ package is a generic tool for manifold analysis. It allows to infer a relevant transition or evolutionary path which can highlights the features involved in a specific process. _spathial_ can be useful in all the scenarios where the temporal (or pseudo-temporal) evolution is the main problem (e.g. tumor progression).
+
+[click here for a preview](https://github.com/erikagardini/spathial/tree/master/inst/extras/img_1.png)
 
 The _spathial_ package implements the principal path algorithm [1] and allows to navigate a n-dimensional space. The input of the algorithm are two points, which represent the boundary conditions of the algorithm: the starting and the ending points. Given the boundaries, the algorithm learns a smooth transition path connecting them. Along the path there are new intermediate data samples which gradually morphs from the starting point to the ending point.
 In this way it is possible to move from two known states. Additionally, analysing the correlation between the path progression and the features is possible to perform feature selection.
@@ -27,9 +29,18 @@ The next sections describes how to use _spathial_ and provides some examples.
 # Quick start
 In this section the most basic steps to run the _spathial_ implementation of the principal path algorithm [1] are shown, through a simple 2d example.
 
-The very first step is the _spathial_ package installation
+The very first step is the _spathial_ package installation.
+
+* __Directly from CRAN__:
 ```{r eval=FALSE}
 install.packages("spathial")
+```
+
+* __From GitHub using devtools__:
+```{r eval=FALSE}
+install.packages("devtools")
+library(devtools)
+devtools::install_github("erikagardini/spathial", build_vignettes=TRUE)
 ```
 
 And its loading:
@@ -73,10 +84,11 @@ head(X_labels)
 
 The following code snippet shows how to plot the data points colored according to ```X_labels```:
 
-```{r fig.cap="_Quick Start example dataset_"}
+```{r fig.cap="__Quick Start example dataset 2D.__ Each point is a sample of the dataset, colored according to its labels."}
 # Plot the results
 colors <- rainbow(length(table(as.numeric(as.factor(X_labels)))))
 colors_labels <- sapply(as.numeric(as.factor(X_labels)), function(x){colors[x]})
+oldpar <- par(no.readonly = TRUE)
 par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
 plot(X[,1],X[,2],col=colors_labels,pch=as.character(as.numeric(as.factor(X_labels))),
       xlab=colnames(X)[1],ylab=colnames(X)[2], main="Data points")
@@ -84,6 +96,7 @@ legend_names = unique(X_labels)
 legend_color = unique(colors_labels)
 legend_pch = unique(as.character(as.numeric(as.factor(X_labels))))
 legend("topright", inset=c(-0.25,0), legend=legend_names, col=legend_color, pch=legend_pch)
+par(oldpar)
 ```
 
 ## Step 1: select the boundaries
@@ -133,9 +146,10 @@ X_labels<-boundary_init$X_labels
 ```
 
 The following plots the boundaries when ```mode=2```, ```from=3``` and ```to=6```:
-``` {r fig.cap="_Quick Start example - boundaries_"}
+``` {r fig.cap="__Quick Start example - boundaries.__ Each point is a sample of the 2D dataset, colored according to its labels. Boundaries are respectively the centroid of the samples labelled as *3* (start point) and the centroid of the samples labelled as *6* (end point)."}
 #Plot the results
 boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
+oldpar <- par(no.readonly = TRUE)
 par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
 plot(X[,1],X[,2], col=colors_labels, pch=as.character(as.numeric(as.factor(X_labels))), xlab=colnames(X)[1], ylab=colnames(X)[2], main="Boundary points")
 points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
@@ -143,6 +157,7 @@ legend_names = c(unique(X_labels), "boundaries")
 legend_color = c(unique(colors_labels), "black")
 legend_pch = c(unique(as.character(as.numeric(as.factor(X_labels)))), "X")
 legend("topright", inset=c(-0.3,0), legend=legend_names, col=legend_color, pch=legend_pch)
+par(oldpar)
 ```
 
 ## Step 3: prefiltering (optional)
@@ -171,9 +186,9 @@ X_garbage <- X[!mask,]
 ```
 
 The following code shows the results of the prefiltering step, with removed points greyed out:
-```{r fig.height=10, fig.cap="_Quick Start example - prefiltering_"}
+```{r fig.height=10, fig.cap="__Quick Start example - prefiltering.__ Each point is a sample of the 2D dataset, colored according to its labels. Boundaries are respectively the centroid of the samples labelled as *3* (start point) and the centroid of the samples labelled as *6* (end point). Prefiltered samples are marked in gray."}
+oldpar <- par(no.readonly = TRUE)
 par(mfrow=c(2,1))
-
 par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
 plot(X[,1],X[,2], col=colors_labels, pch=as.character(as.numeric(as.factor(X_labels))), xlab=colnames(X)[1], ylab=colnames(X)[2], main="Before Filtering")
 points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
@@ -190,6 +205,7 @@ legend_names = c(unique(X_labels), "boundaries", "filtered")
 legend_color = c(unique(colors_labels), "black", "gray")
 legend_pch = c(unique(as.character(as.numeric(as.factor(X_labels)))), "X", "x")
 legend("topright", inset=c(-0.3,0), legend=legend_names, col=legend_color, pch=legend_pch)
+par(oldpar)
 ```
 
 ## Step 4: principal path
@@ -224,14 +240,12 @@ When the input matrix ```X``` has more than 2 columns, the function reduce the d
 
 The following code shows how to use the function ```spathialPlot``` with the path generated during the previous step (with or without prefiltering):
 
-```{r fig.cap='_Output of the spathialPlot() function._'}
+```{r fig.cap='__Output of the spathialPlot() function.__ Each point is a sample of the 2D dataset, colored according to its labels. Boundaries are respectively the centroid of the samples labelled as *3* (start point) and the centroid of the samples labelled as *6* (end point). The Principal Path is marked in blue. It moves from the start point to the end point passing through each waypoint (marked with "*"). Filtered samples are marked in grey.'}
 # Plot principal path with prefiltering - provide a mask
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res_with_filtering,
                        perplexity_value=30, mask=mask,
                        title="Principal path with prefiltering"
 )
-```
-```{r, cap='_Output of the spathialPlot() function. Filtered samples are marked in grey._'}
 # Plot principal path without prefiltering - mask NULL
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res_without_filtering,
                        perplexity_value=30,                       
@@ -246,27 +260,30 @@ The function takes as input the matrix ```X``` (which is composed only by the pr
 
 The following code shows how to use the function ```spathialLabels``` and how to plot the result:
 
-```{r fig.cap='_Quick Start example - path labels across path steps_'}
-### Matrix X not filtered
+```{r fig.height=10, fig.cap='__Quick Start example - path labels across path steps.__ For each waypoint of the Principal Path (computed from the centroid of the samples labelled as *3* (start point) to the centroid of the samples labelled as *6* (end point)), the assigned label is the label of the nearest sample.'}
+oldpar <- par(no.readonly = TRUE)
+par(mfrow=c(2,1))
+# Matrix X not filtered
 ppath_labels <- spathial::spathialLabels(X, X_labels, spathial_res_with_filtering)
+# Matrix X filtered
+ppath_labels_filtered <- spathial::spathialLabels(X, X_labels, spathial_res_without_filtering)
+
 # Plot the results
 ppath_labels_numerical = as.numeric(as.factor(ppath_labels))
-
 colors_labels_ppath <- sapply(ppath_labels_numerical, function(y){colors[as.integer(y)]})
 plot(c(1:length(ppath_labels_numerical)), c(ppath_labels_numerical), col=colors_labels_ppath,
      pch=as.character(ppath_labels_numerical), xlab="Path Step", ylab="Sample Label",
      main="Path progression with prefiltering"
 )
 
-### Matrix X filtered
-ppath_labels <- spathial::spathialLabels(X, X_labels, spathial_res_without_filtering)
 # Plot the results
-ppath_labels_numerical = as.numeric(as.factor(ppath_labels))
-colors_labels_ppath <- sapply(ppath_labels_numerical, function(y){colors[as.integer(y)]})
-plot(c(1:length(ppath_labels_numerical)), c(ppath_labels_numerical), col=colors_labels_ppath,
-     pch=as.character(ppath_labels_numerical), xlab="Path Step", ylab="Sample Label",
+ppath_labels_filtered_numerical = as.numeric(as.factor(ppath_labels_filtered))
+colors_labels_ppath <- sapply(ppath_labels_filtered_numerical, function(y){colors[as.integer(y)]})
+plot(c(1:length(ppath_labels_filtered_numerical)), c(ppath_labels_filtered_numerical), col=colors_labels_ppath,
+     pch=as.character(ppath_labels_filtered_numerical), xlab="Path Step", ylab="Sample Label",
      main="Path progression without prefiltering"
 )
+par(oldpar)
 ```
 
 ### Extract principal path associated features
@@ -334,14 +351,12 @@ spathial_res <- spathial::spathialWay(X, boundary_ids, NC)
 ```
 In order to visualize the multi-dimensional dataset on two dimensions, one performs a t-SNE analysis on it [2].
 
-```{r fig.cap="_Principal Path across the TCGA Liver Cancer dataset_"}
+```{r fig.cap="__Principal Path across the TCGA Liver Cancer dataset.__ 2D visualization of the Principal Path together with the data points. The x and the y coordinates are the output of the dimensionality reduction performed with tSNE [2]. The start point and the end point of the Principal Path are respectively the centroid of the normal samples and the centroid of the tumor samples. The Principal Path is composed of 50 intermediate points (waypoints) plus the boundaries."}
 # Plot the path in 2D using Rtsne
-spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res,
-                       perplexity_value=30)
-
+spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value=30)
 ```
 
-```{r fig.cap='_Liver Cancer example - path labels across path steps_'}
+```{r fig.cap='__Liver Cancer example - path labels across path steps.__ For each waypoint of the Principal Path (computed from the centroid of the normal samples to the centroid of the tumor samples), the assigned label is the label of the nearest sample.'}
 # Labels for each waypoint with knn
 ppath_labels <- spathial::spathialLabels(X, X_labels, spathial_res)
 # Plot the results
@@ -362,6 +377,7 @@ statistics<-spathialStatistics(spathial_res)
 In this case, the statistics is particularly interesting, as it shows the most associated functional genes to the transition between normal and tumor liver tissues. 
 In fact, it contains information about the correlation between each feature (genes) and a vector from 1 to NC+2 (where NC is the number of waypoints) that represents the progression along the path.
 This helps finding the genes particularly involved with the evolution from the healthy to the unhealthy state. The following code highlights the 10 most positively and most negatively associated genes to the normal-tumor path progression:
+
 ```{r}
 singlepath_correlations<-statistics$correlations
 top_positive_correlations<-sort(singlepath_correlations,decreasing=TRUE)[1:10]
@@ -432,10 +448,12 @@ save(spathial_res, "spathial_res.rda")
 Each waypoint is a new gene profile which is sligthly different from the previous one and all of them are topologically connected via a chain of springs.
 
 The _spathial_ method ```spathialPlot``` can be used to visualize the path.
-```{r}
+
+```{r fig.cap="__Principal Path across the TCGA Luad Cancer dataset.__ 2D visualization of the Principal Path together with the data points. The x and the y coordinates are the output of the dimensionality reduction performed with tSNE [2]. The start point and the end point of the Principal Path are the most distant points from the centroid of the tumor samples and the centroid of the normal samples, respectively. The Principal Path is composed of 50 intermediate points (waypoints) plus the boundaries."}
 load(url("https://github.com/erikagardini/spathial_dataframes/raw/master/spathial_res.rda"))
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value = 30, mask = NULL)
 ```
+
 Since in this example we have a n-dimensional space (with n = 19637), a dimensionality reduction strategy is necessary to plot the principal path algorithm. _spathial_ uses the t-SNE algorithm [2]. 
 
 The _spathial_ method ```spathialStatistics``` can be used to calculate the Pearson's correlation coefficients, the p values, the adjusted p values and rank the genes according to the correlation scores: 
@@ -488,7 +506,7 @@ spathial_res <- spathial::spathialWay(X, boundary_ids, NC = 50)
 Each waypoint is a new cell which is sligthly different from the previous one and all of them are topologically connected via a chain of springs.
 
 Finally, one can use the _spathial_ method ```spathialPlot``` to plot the path as it follows:
-```{r}
+```{r fig.cap="__Principal Path across the Karlsson Single-cell RNA-Seq dataset__ 2D visualization of the Principal Path together with the data points. The x and the y coordinates are the output of the dimensionality reduction performed with tSNE [2]. The start point and the end point of the Principal Path are the centroid of the samples labelled as *G1* and the centroid of the samples labelled as *G2/M*, respectively. The Principal Path is composed of 50 intermediate points (waypoints) plus the boundaries."}
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value = 30, mask = NULL)
 ```
 

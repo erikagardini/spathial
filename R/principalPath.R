@@ -1,11 +1,18 @@
 #Get the coordinates of the waypoints of the principal path
 compute_spathial <- function(X, boundary_ids, NC){
   ### Initialize waypoints
-  waypoint_ids<-initMedoids(X, NC, 'kpp', boundary_ids)
+  print("Initializing waypoints...")
+  X <- as.matrix(X)
+  N<-nrow(X)
+  M <- NC+2
+  XX <- matrix(rep(matrixStats::rowSums2(X*X), M), N, M, byrow=F)
+  waypoint_ids<-initMedoids(X, XX, NC, 'kpp', boundary_ids)
+
   waypoint_ids<-c(boundary_ids[1],waypoint_ids,boundary_ids[2])
   init_W<-X[waypoint_ids,]
 
   ### Annealing with rkm
+  print("Computing paths...")
   s_span<-pracma::logspace(5,-5)
   s_span<-c(s_span,0)
 
@@ -13,13 +20,14 @@ compute_spathial <- function(X, boundary_ids, NC){
    pb <- utils::txtProgressBar(min = 0, max = length(s_span), style = 3)
    for(i in 1:length(s_span)){
      s<-s_span[i]
-     W<-rkm(X,init_W,s,plot_ax=FALSE)
+     W<-rkm(X,XX, init_W,s,plot_ax=FALSE)
      init_W<-W
      models[[as.character(s)]]<-W
      utils::setTxtProgressBar(pb, i)
    }
   close(pb)
 
+  print("Path selection...")
   W_dst_var <- rkm_MS_pathvar(models, s_span, X)
   s_elb_id <- find_elbow(cbind(s_span, W_dst_var))
   ppath <- models[[s_elb_id]]
@@ -27,7 +35,7 @@ compute_spathial <- function(X, boundary_ids, NC){
 }
 
 #Regularized K-means for principal path, MINIMIZER.
-rkm <- function(X, init_W, s, plot_ax=FALSE){
+rkm <- function(X, XX, init_W, s, plot_ax=FALSE){
   X<-as.matrix(X)
 
   # Extract useful info from args
@@ -54,10 +62,8 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
   rownames(AW)<-colnames(AW)<-rownames(B)
 
   # Compute initial labels
-  XW_dst<-pracma::distmat(
-    as.matrix(X),
-    as.matrix(init_W)
-  )
+  XW_dst <- dist(as.matrix(X), as.matrix(init_W), XX)
+
   XW_dst<-XW_dst^2
   u<-colnames(XW_dst)[apply(XW_dst,1,which.min)]
 
@@ -81,6 +87,8 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
     for (i in 1:nrow(C)) {
       indexes <- which(u == names_of_rows[i])
       C[i, ] <-  matrixStats::colSums2(X, rows = indexes)
+      #input <- X[indexes,, drop=FALSE]
+      #C[i, ] <- my_R_colSum(input)
     }
 
     # Construct K-means Heassian
@@ -97,10 +105,8 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
     rownames(W)<-rownames(init_W)
 
     # Compute new labels
-    XW_dst<-pracma::distmat(
-      as.matrix(X),
-      as.matrix(W)
-    )
+    XW_dst <- dist(as.matrix(X), as.matrix(W), XX)
+
     XW_dst<-XW_dst^2
     u_new<-colnames(XW_dst)[apply(XW_dst,1,which.min)]
 
@@ -113,12 +119,15 @@ rkm <- function(X, init_W, s, plot_ax=FALSE){
 
 #Regularized K-means for principal path: prefiltering
 rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1){
+  X <- as.matrix(X)
   N <- nrow(X)
   d <- ncol(X)
   n <- Nf - 2
+  M <- Nf
+  XX <- matrix(rep(matrixStats::rowSums2(X*X), M), N, M, byrow=F)
 
   # Pick Nf medoids with k-means++ and compute pairwise distance matrix
-  med_ids<-initMedoids(X,n,init_type="kpp",boundary_ids)
+  med_ids<-initMedoids(X,XX,n,init_type="kpp",boundary_ids)
   med_ids<-c(boundary_ids[1],med_ids,boundary_ids[2])
   medmed_dst<-as.matrix(stats::dist(X[med_ids,],method="euclidean"))^2
 
@@ -148,10 +157,7 @@ rkm_prefilter <- function(X, boundary_ids, Nf=200, k=5, p=1000, T=0.1){
   }
   to_filter_ids<-unique(setdiff(to_filter_ids,path))
   to_keep_ids<-setdiff(rownames(medmed_dst),to_filter_ids)
-  Xmed_dst<-pracma::distmat(
-    as.matrix(X),
-    as.matrix(X[to_keep_ids,])
-  )
+  Xmed_dst<-dist(X, X[to_keep_ids,], XX)
   Xmed_dst<-Xmed_dst^2
   rownames(Xmed_dst)<-rownames(X)
   colnames(Xmed_dst)<-to_keep_ids

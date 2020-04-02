@@ -67,7 +67,7 @@ spathialBoundaryIds <- function(X, X_labels = NULL, mode = 1, from = NULL, to = 
         X[which(rownames(X) == boundary_ids[2]),1], X[which(rownames(X) == boundary_ids[2]),2],pch="x",col="black",cex=4
       )
     }else{
-      tsne_res <- Rtsne::Rtsne(X, dims = 2, perplexity = 30)
+      tsne_res <- Rtsne::Rtsne(X, dims = 2, perplexity = 30, pca = TRUE, partial_pca = TRUE)
       X_2D <- tsne_res$Y
 
       colors_labels <- sapply(numeric_labels, function(x){colors[x]})
@@ -152,6 +152,10 @@ spathialBoundaryIds <- function(X, X_labels = NULL, mode = 1, from = NULL, to = 
 #' boundary_ids <- boundaryRes$boundary_ids
 #' # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
 #' filterRes <- spathialPrefiltering(X, boundary_ids)
+#' # Extract prefiltering results
+#' mask <- filterRes$mask
+#' boundary_ids <- filterRes$boundary_ids
+#' X <- X[mask,]
 #' @export
 spathialPrefiltering <- function(X, boundary_ids){
   prefiltered<-rkm_prefilter(X, boundary_ids)
@@ -184,28 +188,8 @@ spathialPrefiltering <- function(X, boundary_ids){
 #' boundary_ids <- boundaryRes$boundary_ids
 #' #Set the number of waypoints
 #' NC <- 20
-#' # Run spathialWay without prefilterint
+#' # Run spathialWay
 #' spathial_res <- spathialWay(X, boundary_ids, NC)
-#' spathial_res
-#'
-#' #EXAMPLE 2
-#' # Load data matrix X
-#' load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
-#' # Load description vector X_labels
-#' load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
-#' # Run spathialBoundary
-#' boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
-#' X <- boundaryRes$X
-#' X_labels <- boundaryRes$X_labels
-#' boundary_ids <- boundaryRes$boundary_ids
-#' # Run spathial spathialPrefiltering with the output of the function spathialBoundaryIds
-#' filterRes <- spathialPrefiltering(X, boundary_ids)
-#' #Set the number of waypoints
-#' NC <- 20
-#' # Run spathialWay with the filtered data
-#' mask <- filterRes$mask
-#' boundary_ids <- filterRes$boundary_ids
-#' spathial_res <- spathialWay(X[mask,], boundary_ids, NC)
 #' spathial_res
 #' @export
 spathialWay <- function(X, boundary_ids, NC=50){
@@ -217,7 +201,7 @@ spathialWay <- function(X, boundary_ids, NC=50){
 
 #' Find labels
 #'
-#' Get the label of each waypoint accordin to the neighbourhood
+#' Get the label of each waypoint according to the neighbourhood
 #'
 #' @param X data points
 #' @param X_labels labels of the data points
@@ -236,32 +220,10 @@ spathialWay <- function(X, boundary_ids, NC=50){
 #' boundary_ids <- boundaryRes$boundary_ids
 #' #Set the number of waypoints
 #' NC <- 20
-#' # Run spathialWay without prefiltering
+#' # Run spathialWay
 #' spathial_res <- spathialWay(X, boundary_ids, NC)
 #' #Run spathialLabels with spathial_res
 #' labels <- spathialLabels(X, X_labels, spathial_res)
-#' labels
-#'
-#' #EXAMPLE 2
-#' # Load data matrix X
-#' load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
-#' # Load description vector X_labels
-#' load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
-#' # Run spathialBoundary
-#' boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
-#' X <- boundaryRes$X
-#' X_labels <- boundaryRes$X_labels
-#' boundary_ids <- boundaryRes$boundary_ids
-#' # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
-#' filterRes <- spathialPrefiltering(X, boundary_ids)
-#' #Set the number of waypoints
-#' NC <- 20
-#' # Run spathialWay with the filtered data
-#' mask <- filterRes$mask
-#' boundary_ids <- filterRes$boundary_ids
-#' spathial_res <- spathialWay(X[mask,], boundary_ids, NC)
-#' #Run spathialLabels with spathial_res
-#' labels <- spathialLabels(X[mask,], X_labels[mask], spathial_res)
 #' labels
 #' @export
 spathialLabels <- function(X, X_labels, spathial_res){
@@ -300,34 +262,16 @@ spathialLabels <- function(X, X_labels, spathial_res){
 #' boundary_ids <- boundaryRes$boundary_ids
 #' #Set the number of waypoints
 #' NC <- 20
-#' # Run spathialWay without prefiltering
+#' # Run spathialWay
 #' spathial_res <- spathialWay(X, boundary_ids, NC)
 #' #Run spathialPlot with spathial_res
 #' spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value=30)
-#'
-#' #EXAMPLE 2
-#' # Load data matrix X
-#' load(system.file('extdata','X.rda',package='spathial',mustWork=TRUE))
-#' # Load description vector X_labels
-#' load(system.file('extdata','X_labels.rda',package='spathial',mustWork=TRUE))
-#' # Run spathialBoundary
-#' boundaryRes <- spathialBoundaryIds(X, X_labels, mode=2, from=3, to=6)
-#' X <- boundaryRes$X
-#' X_labels <- boundaryRes$X_labels
-#' boundary_ids <- boundaryRes$boundary_ids
-#' # Run spathial spathialPrefiltering with the output of the function spathialBoundaryIds
-#' filterRes <- spathialPrefiltering(X, boundary_ids)
-#' #Set the number of waypoints
-#' NC <- 20
-#' # Run spathialWay with the filtered data
-#' mask <- filterRes$mask
-#' boundary_ids <- filterRes$boundary_ids
-#' spathial_res <- spathialWay(X[mask,], boundary_ids, NC)
-#' #Run spathialPlot with spathial_res
-#' spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value=30, mask)
 #' @export
 spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_value=NULL, mask=NULL, title = NULL, ...){
   set.seed(123)
+  oldpar <- graphics::par(no.readonly = TRUE)
+  on.exit(graphics::par(oldpar))
+
   if(is.null(title)){
     title <- "2d data visualization"
   }
@@ -337,13 +281,20 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
     colors <- grDevices::rainbow(max(numeric_labels))
     pch_val <- "o"
   }else{
+    if(length(X_labels) != nrow(X)){
+      stop("Length X_labels != nrow(X)")
+    }
     if(!is.numeric(X_labels) || !all(X_labels > 0)){
       numeric_labels <- as.numeric(as.factor(X_labels))
     }else{
       numeric_labels = X_labels
     }
     colors <- grDevices::rainbow(max(numeric_labels))
-    pch_val <- as.character(numeric_labels)
+    if(length(unique(X_labels)) > 9){
+      pch_val <- "o"
+    }else{
+      pch_val <- as.character(numeric_labels)
+    }
   }
   if(ncol(X) == 2){
     colors_labels <- sapply(numeric_labels, function(x){colors[x]})
@@ -354,7 +305,11 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
 
     legend_names = c(as.character(unique(X_labels)), "boundaries", "principal path")
     legend_color = c(unique(colors_labels), "black", "red")
-    legend_pch = c(unique(pch_val), "x", "*")
+    if(unique(pch_val)[1] == 'o'){
+      legend_pch = c(rep(unique(pch_val), length(unique(colors_labels))), "x", "*")
+    }else{
+      legend_pch = c(unique(pch_val), "x", "*")
+    }
 
     graphics::par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
     graphics::plot(X[,1],X[,2], col=colors_labels, pch=pch_val, xlab=colnames(X)[1], ylab=colnames(X)[2], main = title)
@@ -367,7 +322,7 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
       legend_pch = c(legend_pch, "x")
     }
     graphics::points(boundaries[,1],boundaries[,2], pch="x",col="black",cex=4)
-    graphics::lines(spathial_res[,1], spathial_res[,2],lwd=3,col="red",type="o",pch="*")
+    graphics::lines(spathial_res[,1], spathial_res[,2],lwd=3,col="red",type="o",pch="*", cex=2)
     graphics::legend("topright", inset=c(-0.35,0), legend=legend_names, col=legend_color, pch=legend_pch)
   }else{
     if(is.null(perplexity_value)){
@@ -378,7 +333,8 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
     total_labels <- c(numeric_labels, ppath_labels)
     all_points <- rbind(X, spathial_res)
 
-    tsne_res <- Rtsne::Rtsne(as.matrix(all_points), dims = 2, perplexity = perplexity_value, check_duplicates=FALSE)
+    large <- (nrow(all_points) + ncol(all_points)) > 20000 #speed up with large_matrix
+    tsne_res <- Rtsne::Rtsne(as.matrix(all_points), dims = 2, perplexity = perplexity_value, check_duplicates=FALSE, pca = TRUE, partial_pca = large)
     points_2D <- tsne_res$Y
 
     boundary_ids_2D <- points_2D[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
@@ -399,7 +355,11 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
     colors_labels <- sapply(numeric_labels, function(x){colors[x]})
     legend_names = c(as.character(unique(X_labels)), "boundaries", "principal path")
     legend_color = c(unique(colors_labels), "black", "blue")
-    legend_pch = c(unique(pch_val),"x", "*")
+    if(unique(pch_val)[1] == 'o'){
+      legend_pch = c(rep(unique(pch_val), length(unique(colors_labels))), "x", "*")
+    }else{
+      legend_pch = c(unique(pch_val), "x", "*")
+    }
 
     graphics::par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
     graphics::plot(points_2D[,1],points_2D[,2], xlab="tsne1", ylab="tsne2", col=colors_labels, pch=pch_val, main=title)
@@ -410,7 +370,7 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
       legend_pch = c(legend_pch, "x")
     }
     graphics::points(boundary_ids_2D[,1],boundary_ids_2D[,2], pch="x",col="black",cex=4)
-    graphics::lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch="*")
+    graphics::lines(ppath_2D[,1], ppath_2D[,2],lwd=3,col="blue",type="o",pch="*", cex=2)
     graphics::legend("topright", inset=c(-0.35,0), legend=legend_names, col=legend_color, pch=legend_pch)
   }
 }
@@ -440,14 +400,10 @@ spathialPlot <- function(X, X_labels, boundary_ids, spathial_res, perplexity_val
 #' X <- boundaryRes$X
 #' X_labels <- boundaryRes$X_labels
 #' boundary_ids <- boundaryRes$boundary_ids
-#' # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
-#' filterRes <- spathialPrefiltering(X, boundary_ids)
 #' #Set the number of waypoints
 #' NC <- 20
-#' # Run spathialWay with the filtered data
-#' mask <- filterRes$mask
-#' boundary_ids <- filterRes$boundary_ids
-#' spathial_res <- spathialWay(X[mask,], boundary_ids, NC)
+#' # Run spathialWay
+#' spathial_res <- spathialWay(X, boundary_ids, NC)
 #' #Run spathialStatistics with spathial_res
 #' statistics <- spathialStatistics(spathial_res)
 #' @export

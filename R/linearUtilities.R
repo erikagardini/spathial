@@ -1,27 +1,25 @@
 #Initialize NC medoids with init_type rational.
-initMedoids <- function(X, n, init_type, boundary_ids){
+initMedoids <- function(X, XX, n, init_type, boundary_ids){
   N<-nrow(X)
   d<-ncol(X)
   med_ids<-rep(-1,n)
   if(init_type=="kpp"){
-    # Select a random point (not a boundary id)
+    #Select a random point (not a boundary id)
     med_ids[1]<-sample(setdiff(rownames(X),boundary_ids),1)
-
     # Now fill the path with n randomly picked medoids
     boundary_coords<-X[boundary_ids,]
+    Xmed_dst <- dist(as.matrix(X), as.matrix(rbind(X[med_ids[1],],boundary_coords)), XX)
     for(i in 1:(n-1)){
       # Calculate all distances between points up to here and boundaries
-      Xmed_dst<-pracma::distmat(
-        as.matrix(X),
-        as.matrix(rbind(X[med_ids[1:i],],boundary_coords))
-      )
-      Xmed_dst<-Xmed_dst^2
-      D2<-apply(Xmed_dst,1,min)
+      Xmed_dst_sq<-Xmed_dst^2
+      D2<-apply(Xmed_dst_sq,1,min)
       D2_n<-1.0/sum(D2)
 
       med_id<-rownames(X)[which.max(D2*D2_n)]
 
       med_ids[i+1]<-med_id
+      dst <- dist(as.matrix(X), as.matrix(X[med_ids[i+1],,drop=FALSE]), XX)
+      Xmed_dst <- cbind(Xmed_dst[,1:(ncol(Xmed_dst)-2), drop = FALSE], dst, Xmed_dst[,(ncol(Xmed_dst)-1):ncol(Xmed_dst)])
     }
   } else if (init_type=='uniform'){
     med_ids<-sample(rownames(X),n)
@@ -53,13 +51,14 @@ find_elbow <- function(f){
   return(elb_id)
 }
 
-#Get the names of the N-nearest points
-find_nearest_points <- function(point, points, neighbors){
-  dst<-pracma::distmat(
-    as.matrix(point),
-    as.matrix(points)
-  )
-  ord <- order(dst)
-  nearest_name <- rownames(points[ord[1:neighbors],])
-  return(nearest_name)
+#Optimized Euclidean distance
+dist <- function(X, Y, XX=NULL){
+  m  <- nrow(X); n <- nrow(Y)
+  if(is.null(XX)){
+    XX <- matrix(rep(matrixStats::rowSums2(X*X), m), n, m, byrow=F)
+  }
+  sub <- XX[,1:n]
+  XY <- X %*% t(Y)    # (m,n)-matrix
+  YY <- matrix(rep(matrixStats::rowSums2(Y*Y), m), m, n, byrow=T)
+  return(sqrt(pmax(sub + YY - 2*XY, 0)))
 }
