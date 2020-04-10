@@ -33,4 +33,8 @@ X_labels <- boundaryRes$X_labels
 boundary_ids <- boundaryRes$boundary_ids
 # Run spathial spathialPrefilterinh with the output of the function spathialBoundaryIds
 filterRes <- spathialPrefiltering(X, boundary_ids)
+# Extract prefiltering results
+mask <- filterRes$mask
+boundary_ids <- filterRes$boundary_ids
+X <- X[mask,]
 }

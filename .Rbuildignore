@@ -1,6 +1,8 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^\.Rhistory$
 ^README\.md$
+^LICENSE$
 ^\.gitignore$
 ^inst/extras/logo_spathial_github\.png$
 ^inst/CITATION$

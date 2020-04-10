@@ -87,8 +87,6 @@ rkm <- function(X, XX, init_W, s, plot_ax=FALSE){
     for (i in 1:nrow(C)) {
       indexes <- which(u == names_of_rows[i])
       C[i, ] <-  matrixStats::colSums2(X, rows = indexes)
-      #input <- X[indexes,, drop=FALSE]
-      #C[i, ] <- my_R_colSum(input)
     }
 
     # Construct K-means Heassian
