@@ -105,7 +105,7 @@ The package _spathial_ has the function ```spathialBoundaryIds``` which takes as
 
 The parameter ```mode``` can assume one of the following values:
 
-* __1__ _(default)_: the user can choose the start and end points directly from the 2D representations of the data points. 
+* __1__ _(default)_: the user can choose the start and end points directly from the 2D representation of the data points. 
 In this case, the values of the parameters ```from``` and ```to``` are not considered.
 * __2__: the start point is the centroid of all the data points labelled as the parameter ```from```, while the end point is the centroid of all the data points labelled as the parameter ```to```. This mode is allowed only when ```X_labels``` is not NULL.
 * __3__: the start point is the data point with the univocal rowname equal to the parameter ```from``` while the end point is the data point with the univocal rowname equal to the parameter ```to```.
@@ -349,7 +349,7 @@ X_labels <- boundary_init$X_labels
 NC <- 50
 spathial_res <- spathial::spathialWay(X, boundary_ids, NC)
 ```
-In order to visualize the multidimensional dataset in two dimensions, one performs a t-SNE analysis on it [2].
+In order to visualize the multidimensional dataset in two dimensions, one performs a t-SNE projection on it [2].
 
 ```{r fig.cap="__Principal Path across the TCGA Liver Cancer dataset.__ 2D visualization of the Principal Path together with the data points. The x and y coordinates are the output of the dimensionality reduction performed with tSNE [2]. The start point and the end point of the Principal Path are the centroid of the normal samples and the centroid of the tumor samples, respectively. The Principal Path comprises 50 intermediate points (waypoints) plus the boundaries."}
 # Plot the path in 2D using Rtsne
