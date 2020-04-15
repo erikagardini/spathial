@@ -27,7 +27,8 @@ Imports:
     class,
     utils,
     knitr,
-    rmarkdown
+    rmarkdown,
+    irlba
 VignetteBuilder: 
     utils,
     knitr,
